@@ -1,0 +1,40 @@
+# Virtual Environment
+venv/
+env/
+.env
+.venv
+
+# Database files
+db/
+*.db
+*.db-shm
+*.db-wal
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

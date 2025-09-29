@@ -1,0 +1,21 @@
+# Core dependencies for SetUpShop project
+
+# Database
+sqlite3
+# Note: sqlite3 is included in Python standard library
+
+# Date and time handling  
+# datetime is included in Python standard library
+
+# JSON handling
+# json is included in Python standard library
+
+# File path handling
+# pathlib is included in Python standard library
+
+# Password hashing
+# hashlib is included in Python standard library
+
+# If you need additional packages later, add them here:
+# flask==2.3.3
+# requests==2.31.0
