@@ -1,24 +1,13 @@
 <!--
 SetUpShop – Equipment Cards Mock Page
-
-Drop this file into your Flask templates folder as `equipment_cards.html`.
-Visit from a route like `/equipment` (example route provided below in the chat).
-
-Assumptions:
-- You're passing `equipment` (list[dict]) to the template.
-  Each dict should include at least: id, equipment_name, description, width, height, depth,
-  date_purchased, next_maintenance_date, and optional notes.
-- If you haven't wired the DB yet, you can pass the mocked `equipment` list from the route.
-
-Styling is self‑contained (no external CSS). Adjust as needed.
 -->
-<!DOCTYPE html>
+<!DOCTYPE html> <!--styling for the page-->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Equipment Library</title>
-  <style>
+  <style> 
     :root {
       --bg: #0b1118;
       --card: #121a24;
@@ -79,6 +68,7 @@ Styling is self‑contained (no external CSS). Adjust as needed.
   </style>
 </head>
 <body>
+    <!-- header with title and search/filter form -->
   <header>
     <div class="title">Equipment Library</div>
     <form class="searchbar" method="get">
@@ -92,7 +82,7 @@ Styling is self‑contained (no external CSS). Adjust as needed.
       <button type="submit" class="chip" aria-label="Filter">Filter</button>
     </form>
   </header>
-
+<!-- if there is equipment data, loop through and display each item as a card; otherwise show a message indicating no equipment is found -->
   {% if equipment and equipment|length %}
     <section class="grid">
       {% for item in equipment %}
