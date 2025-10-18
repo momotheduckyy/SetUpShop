@@ -1,0 +1,130 @@
+<!--
+SetUpShop – Equipment Cards Mock Page
+-->
+<!DOCTYPE html> <!--styling for the page-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Equipment Library</title>
+  <style> 
+    :root {
+      --bg: #0b1118;
+      --card: #121a24;
+      --muted: #8aa0b2;
+      --text: #e7eef6;
+      --accent: #6bc4ff;
+      --ok: #a3f7b5;
+      --warn: #ffd27a;
+      --overdue: #ff9b9b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 2rem; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 10% 0%, #0f1821 0%, var(--bg) 40%);
+      color: var(--text);
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem;
+    }
+    .title {
+      font-size: clamp(1.25rem, 3vw, 1.75rem); font-weight: 700; letter-spacing: 0.3px;
+    }
+    .searchbar {
+      display: flex; gap: .5rem; width: min(540px, 100%);
+    }
+    .searchbar input, .searchbar select {
+      background: #0f1620; border: 1px solid #1d2a38; color: var(--text);
+      padding: .65rem .8rem; border-radius: .6rem; outline: none; width: 100%;
+    }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border: 1px solid #1f2a38; border-radius: 1rem; padding: 1rem; position: relative; overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0,0,0,.22);
+    }
+    .chip {
+      font-size: .7rem; letter-spacing: .2px; color: #0b1320; background: var(--accent);
+      padding: .35rem .55rem; border-radius: .5rem; font-weight: 700; display: inline-flex; align-items: center; gap: .4rem;
+    }
+    .name { font-weight: 800; margin: .6rem 0 .15rem; font-size: 1.05rem; }
+    .desc { color: var(--muted); font-size: .9rem; line-height: 1.35; margin-bottom: .75rem; min-height: 2.2lh; }
+    .specs { display: flex; gap: .5rem; flex-wrap: wrap; margin: .25rem 0 .75rem; }
+    .specs span {
+      font-size: .78rem; color: var(--muted); padding: .35rem .5rem; border: 1px dashed #233142; border-radius: .45rem;
+    }
+    .meta { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+    .dates { font-size: .78rem; color: var(--muted); display: grid; gap: .15rem; }
+    .badge { font-weight: 800; font-size: .75rem; letter-spacing: .3px; padding: .35rem .55rem; border-radius: .5rem; }
+    .ok { background: rgba(163,247,181,.15); border: 1px solid rgba(163,247,181,.35); color: var(--ok); }
+    .warn { background: rgba(255,210,122,.12); border: 1px solid rgba(255,210,122,.35); color: var(--warn); }
+    .overdue { background: rgba(255,155,155,.12); border: 1px solid rgba(255,155,155,.35); color: var(--overdue); }
+    .note { margin-top: .6rem; font-size: .8rem; color: #a8c3d9; border-top: 1px solid #1f2a38; padding-top: .55rem; }
+    .empty {
+      opacity: .8; text-align: center; border: 1px dashed #284059; border-radius: 1rem; padding: 2.25rem; color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+    <!-- header with title and search/filter form -->
+  <header>
+    <div class="title">Equipment Library</div>
+    <form class="searchbar" method="get">
+      <input type="text" name="q" placeholder="Search by name or description…" value="{{ request.args.get('q', '') if request else '' }}" />
+      <select name="status">
+        <option value="">All</option>
+        <option value="ok" {{ 'selected' if request and request.args.get('status') == 'ok' else '' }}>Up‑to‑date</option>
+        <option value="due" {{ 'selected' if request and request.args.get('status') == 'due' else '' }}>Due soon</option>
+        <option value="overdue" {{ 'selected' if request and request.args.get('status') == 'overdue' else '' }}>Overdue</option>
+      </select>
+      <button type="submit" class="chip" aria-label="Filter">Filter</button>
+    </form>
+  </header>
+<!-- if there is equipment data, loop through and display each item as a card; otherwise show a message indicating no equipment is found -->
+  {% if equipment and equipment|length %}
+    <section class="grid">
+      {% for item in equipment %}
+        {# compute status classes if the view passed them; otherwise do a simple date compare here #}
+        {% set status = item.status if item.status else 'ok' %}
+        <article class="card">
+          <span class="chip">ID {{ item.id }}</span>
+          <h3 class="name">{{ item.equipment_name }}</h3>
+          <p class="desc">{{ item.description or 'No description provided.' }}</p>
+
+          <div class="specs">
+            <span>W: {{ item.width }}
+              {% if item.width_unit %} {{ item.width_unit }}{% else %} in{% endif %}
+            </span>
+            <span>H: {{ item.height }}
+              {% if item.height_unit %} {{ item.height_unit }}{% else %} in{% endif %}
+            </span>
+            <span>D: {{ item.depth }}
+              {% if item.depth_unit %} {{ item.depth_unit }}{% else %} in{% endif %}
+            </span>
+          </div>
+
+          <div class="meta">
+            <div class="dates">
+              <div>Purchased: <strong>{{ item.date_purchased }}</strong></div>
+              <div>Next maintenance: <strong>{{ item.next_maintenance_date or '—' }}</strong></div>
+            </div>
+            <div class="badge {{ 'overdue' if status == 'overdue' else ('warn' if status == 'due' else 'ok') }}">
+              {{ status|capitalize }}
+            </div>
+          </div>
+
+          {% if item.notes %}
+            <div class="note">Notes: {{ item.notes }}</div>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </section>
+  {% else %}
+    <div class="empty">
+      No equipment found yet. Add items to your library to see them here.
+    </div>
+  {% endif %}
+</body>
+</html>
