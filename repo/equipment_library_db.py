@@ -3,7 +3,9 @@ from datetime import date, timedelta
 from pathlib import Path
 
 # Match user format; have equipment go in database
-DB_PATH = Path(__file__).parent.parent / "db" / "equipment.db"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DB_PATH = PROJECT_ROOT / "db" / "equipment.db" #so server can open DB reliably(fixes "unable to open database file" when working directory varies)
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)  # Ensure folder exists
 USERS_DB_PATH = Path(__file__).parent.parent / "db" / "users.db"
 
 # Basic database connection functions

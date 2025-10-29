@@ -43,7 +43,8 @@ def init_equipment_db():
     with sqlite3.connect(DB_PATH) as conn:
         conn.executescript(EQUIPMENT_SCHEMA)
 
-    print(f"✅ Equipment DB initialized at: {DB_PATH.resolve()}")
+    print(f"Equipment DB initialized at: {DB_PATH.resolve()}")
 
 if __name__ == "__main__":
     init_equipment_db()
+
