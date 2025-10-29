@@ -1,0 +1,40 @@
+/* Main container for shop spaces page */
+.shop-spaces-container {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Page title styling */
+.shop-spaces-container h2 {
+  font-size: 32px;
+  color: #333;
+  margin-bottom: 24px;
+}
+
+/* Grid layout for shop space cards */
+.shop-spaces-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+/* Individual shop space card styling */
+.shop-space-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Shop name heading in card */
+.shop-space-card h3 {
+  font-size: 22px;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+/* Shop details text in card */
+.shop-space-card p {
+  color: #666;
+  margin: 8px 0;
