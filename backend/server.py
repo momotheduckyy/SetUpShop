@@ -25,6 +25,17 @@ from shop_space_functions import (
     delete_shop_space
 )
 
+# Initialize databases on startup
+from users_db import init_db as init_users_db
+from equipment_db import init_equipment_db
+from shop_space_functions import init_shop_spaces_db
+
+print("Initializing databases...")
+init_users_db()
+init_equipment_db()
+init_shop_spaces_db()
+print("Databases initialized successfully!")
+
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
 
