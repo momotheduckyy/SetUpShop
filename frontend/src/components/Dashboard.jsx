@@ -30,14 +30,14 @@ function Dashboard({ user, setUser }) {
           <div className="dashboard-card">
             <h3>My Shop Spaces</h3>
             <p>Create and manage your workshop layouts</p>
-            <button className="card-btn" onClick={() => navigate('/equipment-catalog')}> 
+            <button className="card-btn"> 
               View Shops</button>
           </div>
 
           <div className="dashboard-card">
             <h3>Equipment Catalog</h3>
             <p>Browse available equipment and tools</p>
-            <button className="card-btn">View Catalog</button>
+            <button className="card-btn"  onClick={() => navigate('/equipment-catalog')}>View Catalog</button>
           </div>
 
           <div className="dashboard-card">
