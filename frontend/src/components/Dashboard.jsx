@@ -1,7 +1,10 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom' #added for navigation
 import '../styles/Dashboard.css'
 
 function Dashboard({ user, setUser }) {
+  const navigate = useNavigate()  # Initialize navigation hook
+  
   const handleLogout = () => {
     setUser(null)
     localStorage.removeItem('user')
@@ -29,8 +32,10 @@ function Dashboard({ user, setUser }) {
           <div className="dashboard-card">
             <h3>My Shop Spaces</h3>
             <p>Create and manage your workshop layouts</p>
-            <button className="card-btn">View Shops</button>
-          </div>
+            <button className="card-btn" onClick={() => navigate('/shop-spaces')}>
+              View Shops
+            </button>
+          </div> #changed to allow shop space navigation 
 
           <div className="dashboard-card">
             <h3>Equipment Catalog</h3>
