@@ -19,6 +19,10 @@ function App() {
             path="/dashboard"
             element={user ? <Dashboard user={user} setUser={setUser} /> : <Navigate to="/login" />}
           />
+          <Route
+            path="/equipment-catalog"
+            element={user ? <EquipmentCatalog user={user} /> : <Navigate to="/login" />}
+          />
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
       </div>
