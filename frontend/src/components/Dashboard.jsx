@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom' #added for navigation
 import '../styles/Dashboard.css'
+import { useNavigate } from "react-router-dom";
 
 function Dashboard({ user, setUser }) {
   const navigate = useNavigate()  # Initialize navigation hook
@@ -40,7 +41,7 @@ function Dashboard({ user, setUser }) {
           <div className="dashboard-card">
             <h3>Equipment Catalog</h3>
             <p>Browse available equipment and tools</p>
-            <button className="card-btn">View Catalog</button>
+            <button className="card-btn"  onClick={() => navigate('/equipment-catalog')}>View Catalog</button>
           </div>
 
           <div className="dashboard-card">
