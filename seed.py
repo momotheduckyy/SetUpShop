@@ -9,27 +9,28 @@ if repo_path.exists():
 else:
     sys.path.insert(0, str(Path(__file__).parent))
 
-from users_functions import create_user, get_all_users
-from equipment_functions import (
+from users_functions import add_user, check_usernames
+from equipment_library_db import (
     add_equipment_type, add_equipment_to_user, perform_maintenance,
     get_equipment_catalog, get_equipment_by_user
 )
-from shop_spaces_functions import create_shop_space, add_equipment_to_shop_space
+from shop_space_functions import create_shop_space, add_equipment_to_shop_space
 
 
 def seed_database():
     """Seed all databases with sample data"""
     
     # Check if already seeded
-    if get_all_users():
-        print("Db already seedded")
+    existing_users = check_usernames("")  # Empty string matches all users
+    if existing_users:
+        print("Db already seeded")
         return
-    
+
     # Create users
     users = [
-        create_user("jsmith", "John Smith", "john.smith@example.com", "password123"),
-        create_user("mjones", "Mary Jones", "mary.jones@example.com", "password456"),
-        create_user("bwilson", "Bob Wilson", "bob.wilson@example.com", "password789"),
+        add_user("jsmith", "John Smith", "john.smith@example.com", "password123"),
+        add_user("mjones", "Mary Jones", "mary.jones@example.com", "password456"),
+        add_user("bwilson", "Bob Wilson", "bob.wilson@example.com", "password789"),
     ]
     
     # Add equipment types if catalog is empty

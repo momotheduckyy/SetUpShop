@@ -10,8 +10,10 @@ export default function EquipmentCatalog() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await getEquipmentCatalog(); // returns array per your api.js
-        setItems(Array.isArray(data) ? data : []);
+        const data = await getEquipmentCatalog();
+        // Backend returns {equipment: [...]}
+        const equipment = data.equipment || data;
+        setItems(Array.isArray(equipment) ? equipment : []);
       } catch (e) {
         setErr(e.message || "Failed to load catalog");
       } finally {

@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path(__file__).with_name("users.db")
+DB_PATH = Path(__file__).parent.parent / "db" / "users.db"
 DDL = """
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 """
 
 def init_db(db_path: Path = DB_PATH):
+    db_path.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(db_path) as conn:
         conn.execute("PRAGMA foreign_keys = ON;")
         conn.execute("PRAGMA journal_mode = WAL;")
