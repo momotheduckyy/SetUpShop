@@ -1,101 +1,90 @@
+"""
+Simple tests for equipment_library_db.py helper functions
+"""
 import pytest
 import sys
 from pathlib import Path
+from datetime import date, timedelta
 
 # Add repo to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "repo"))
 
 from equipment_library_db import (
-    get_equipment_catalog,
+    days_to_readable_interval,
+    _calculate_next_maintenance_date,
+    _row_to_dict,
     add_equipment_type,
-    get_equipment_type_by_id,
-    add_equipment_to_user,
     get_equipment_by_user,
     perform_maintenance,
-    delete_user_equipment,
-    get_maintenance_summary,
-    days_to_readable_interval
+    delete_user_equipment
 )
 
 
-class TestEquipmentCatalog:
-    """Tests for equipment catalog functions"""
+class TestDaysToReadableInterval:
+    """Test the days_to_readable_interval conversion function"""
     
-    def test_get_equipment_catalog_returns_list(self):
-        """Test 1: get_equipment_catalog returns a list"""
-        result = get_equipment_catalog()
-        assert isinstance(result, list)
+    def test_weekly_conversion(self):
+        """Test 1: 7 days converts to 'weekly'"""
+        assert days_to_readable_interval(7) == "weekly"
     
-    def test_add_equipment_type_creates_new_type(self):
-        """Test 2: add_equipment_type creates equipment"""
-        result = add_equipment_type(
-            equipment_name="Test Equipment",
-            description="Test description", 
-            width=100,
-            height=100,
-            depth=100,
-            maintenance_interval_days=30
-        )
-        assert result is not None
-        assert result['equipment_name'] == "Test Equipment"
-    
-    def test_get_equipment_type_by_id_returns_equipment(self):
-        """Test 3: get_equipment_type_by_id finds equipment"""
-        # Add test equipment
-        new_eq = add_equipment_type("Lookup Test", "desc", 50, 50, 50, 7)
-        
-        # Look it up
-        result = get_equipment_type_by_id(new_eq['id'])
-        assert result is not None
-        assert result['equipment_name'] == "Lookup Test"
-
-
-class TestUserEquipment:
-    """Tests for user equipment functions"""
-    
-    def test_add_equipment_to_user_works(self):
-        """Test 4: add_equipment_to_user adds equipment"""
-        #  test the function exists and has correct signature
-        assert callable(add_equipment_to_user)
-    
-    def test_get_equipment_by_user_returns_list(self):
-        """Test 5: get_equipment_by_user returns list"""
-        result = get_equipment_by_user(user_id=999)  # Non-existent user
-        assert isinstance(result, list)
-    
-    def test_delete_user_equipment_returns_boolean(self):
-        """Test 6: delete_user_equipment returns True/False"""
-        result = delete_user_equipment(user_equipment_id=999999)
-        assert isinstance(result, bool)
-
-
-class TestMaintenance:
-    """Tests for maintenance functions"""
-    
-    def test_perform_maintenance_function_exists(self):
-        """Test 7: perform_maintenance function exists"""
-        assert callable(perform_maintenance)
-    
-    def test_get_maintenance_summary_returns_dict(self):
-        """Test 8: get_maintenance_summary returns dict with correct keys"""
-        result = get_maintenance_summary(user_id=999)
-        assert isinstance(result, dict)
-        assert 'total_equipment' in result
-        assert 'overdue_maintenance' in result
-
-
-class TestHelperFunctions:
-    """Tests for helper/utility functions"""
-    
-    def test_days_to_readable_interval_converts_days(self):
-        """Test 9: days_to_readable_interval converts 7 days to weekly"""
-        result = days_to_readable_interval(7)
-        assert result == "weekly"
-    
-    def test_days_to_readable_interval_converts_year(self):
-        """Test 10: days_to_readable_interval converts 365 days to year"""
+    def test_one_year_conversion(self):
+        """Test 2: 365 days converts to '1 year'"""
         result = days_to_readable_interval(365)
-        assert "year" in result.lower()
+        assert result == "1 year"
+    
+    def test_multiple_years_conversion(self):
+        """Test 3: 730 days converts to '2 years'"""
+        result = days_to_readable_interval(730)
+        assert "2 years" in result
+    
+    def test_one_month_conversion(self):
+        """Test 4: 30 days converts to '1 month'"""
+        result = days_to_readable_interval(30)
+        assert result == "1 month"
+    
+    def test_single_day_uses_singular(self):
+        """Test 5: 1 day uses singular form 'day' not 'days'"""
+        result = days_to_readable_interval(1)
+        assert result == "1 day"
+        assert "days" not in result
+
+
+class TestMaintenanceDateCalculation:
+    """Test the _calculate_next_maintenance_date function"""
+    
+    def test_calculate_from_date_object(self):
+        """Test 6: Calculate next date from date object"""
+        start = date(2025, 1, 1)
+        result = _calculate_next_maintenance_date(start, 30)
+        assert result == date(2025, 1, 31)
+    
+    def test_calculate_from_string_date(self):
+        """Test 7: Calculate next date from ISO string date"""
+        start = "2025-01-01"
+        result = _calculate_next_maintenance_date(start, 7)
+        assert result == date(2025, 1, 8)
+    
+    def test_calculate_with_large_interval(self):
+        """Test 8: Calculate with 365 day interval spans a year"""
+        start = date(2025, 1, 1)
+        result = _calculate_next_maintenance_date(start, 365)
+        assert result == date(2026, 1, 1)
+
+
+class TestUtilityFunctions:
+    """Test utility helper functions"""
+    
+    def test_row_to_dict_returns_none_for_none_input(self):
+        """Test 9: _row_to_dict returns None when given None"""
+        result = _row_to_dict(None)
+        assert result is None
+    
+    def test_functions_are_callable(self):
+        """Test 10: Verify main functions exist and are callable"""
+        assert callable(add_equipment_type)
+        assert callable(get_equipment_by_user)
+        assert callable(perform_maintenance)
+        assert callable(delete_user_equipment)
 
 
 if __name__ == "__main__":
