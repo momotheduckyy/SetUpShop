@@ -2,7 +2,8 @@ import sqlite3
 from pathlib import Path
 
 # Match the pattern from shop_space_functions.py
-DB_PATH = Path(__file__).parent.parent / "db" / "shop_spaces.db"
+# This file is in repo/repo/, so parent.parent.parent gets to project root
+DB_PATH = Path(__file__).parent.parent.parent / "db" / "shop_spaces.db"
 
 #SQL to create shop space
 DDL = """
