@@ -190,15 +190,16 @@ def get_all_user_equipment():
 
 def get_maintenance_summary(user_id):
     """Get maintenance summary for a user"""
-    overdue = len(get_overdue_maintenance(user_id))
-    due_soon = len(get_maintenance_due(user_id, days_ahead=30))  # Next 30 days
+    # TODO: Implement get_overdue_maintenance and get_maintenance_due functions
+    # overdue = len(get_overdue_maintenance(user_id))
+    # due_soon = len(get_maintenance_due(user_id, days_ahead=30))  # Next 30 days
     total_equipment = len(get_equipment_by_user(user_id))
-    
+
     return {
         "user_id": user_id,
         "total_equipment": total_equipment,
-        "overdue_maintenance": overdue,
-        "due_within_30_days": due_soon
+        "overdue_maintenance": 0,  # Placeholder until function is implemented
+        "due_within_30_days": 0    # Placeholder until function is implemented
     }
 
 # HELPER FUNCTIONS
