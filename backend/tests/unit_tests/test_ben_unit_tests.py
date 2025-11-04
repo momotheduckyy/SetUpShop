@@ -24,6 +24,14 @@ from users_functions import (
     check_usernames,
     get_user_by_id
 )
+from users_db import init_db
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_database():
+    """Initialize the database before running any tests"""
+    init_db()
+    yield
 
 
 class TestPasswordHashing:
