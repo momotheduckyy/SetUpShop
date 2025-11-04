@@ -1,8 +1,7 @@
 # Core dependencies for SetUpShop project
 
 # Database
-sqlite3
-# Note: sqlite3 is included in Python standard library
+# sqlite3 is included in Python standard library (no need to install)
 
 # Date and time handling  
 # datetime is included in Python standard library
