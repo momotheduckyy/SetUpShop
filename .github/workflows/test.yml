@@ -28,4 +28,4 @@ jobs:
     - name: Run tests
       run: |
         cd backend
-        pytest tests/test_momo_code.py -v
+        pytest tests/ -v
