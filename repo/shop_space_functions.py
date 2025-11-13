@@ -2,6 +2,7 @@ import sqlite3
 import json
 from datetime import datetime
 from pathlib import Path
+from models.placement import Position, EquipmentPlacement 
 
 # Database paths - following existing project structure
 DB_PATH = Path(__file__).parent.parent / "db" / "shop_spaces.db"
@@ -161,16 +162,9 @@ def get_shop_spaces_by_username(username):
         shop_spaces = cursor.fetchall()
         return [_row_to_dict(space) for space in shop_spaces]
 
-def add_equipment_to_shop_space(shop_id, equipment_id, x_coordinate, y_coordinate, z_coordinate):
+def add_equipment_to_shop_space(shop_id, placement):
     """
     Add equipment to a shop space with placement coordinates
-    
-    Args:
-        shop_id (str): Shop space identifier
-        equipment_id (int): Equipment ID from equipment database
-        x_coordinate (float): X position coordinate
-        y_coordinate (float): Y position coordinate  
-        z_coordinate (float): Z position coordinate
         
     Returns:
         dict: Updated shop space data or None if failed
@@ -181,21 +175,12 @@ def add_equipment_to_shop_space(shop_id, equipment_id, x_coordinate, y_coordinat
         raise ValueError(f"Shop space with ID '{shop_id}' does not exist")
     
     # Validate equipment exists
-    if not _validate_equipment_exists(equipment_id):
-        raise ValueError(f"Equipment with ID {equipment_id} does not exist")
-    
-    # Create equipment placement record
-    equipment_placement = {
-        "equipment_id": equipment_id,
-        "date_added": datetime.now().isoformat(),
-        "x_coordinate": x_coordinate,
-        "y_coordinate": y_coordinate,
-        "z_coordinate": z_coordinate
-    }
+    if not _validate_equipment_exists(placement.equipment_id):
+        raise ValueError(f"Equipment with ID {placement.equipment_id} does not exist")
     
     # Add to existing equipment list
     current_equipment = shop_space['equipment']
-    current_equipment.append(equipment_placement)
+    current_equipment.append(placement.to_dict())
     
     # Update database with new equipment list
     equipment_json = json.dumps(current_equipment)
