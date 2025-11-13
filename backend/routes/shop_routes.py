@@ -15,7 +15,7 @@ from shop_space_functions import (
     delete_shop_space,
     get_all_shop_spaces
 )
-
+from models.placement import Position, EquipmentPlacement
 shop_bp = Blueprint('shops', __name__)
 
 @shop_bp.route('/', methods=['GET'])
@@ -26,29 +26,43 @@ def get_all_shops():
         return jsonify({"shops": shops}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-@shop_bp.route('/', methods=['POST'])
-def create_shop():
-    """Create a new shop space"""
+@shop_bp.route('/<shop_id>/equipment', methods=['POST'])
+def add_equipment_to_shop(shop_id):
+    """Add equipment to shop space"""
     try:
         data = request.get_json()
-        username = data.get('username')
-        shop_name = data.get('shop_name')
-        length = data.get('length')
-        width = data.get('width')
-        height = data.get('height')
-
+        
+        # Create Position object from coordinates
+        position = Position(
+            x=data.get('x_coordinate'),
+            y=data.get('y_coordinate'),
+            z=data.get('z_coordinate')
+        )
+        
+        # Create EquipmentPlacement object
+        placement = EquipmentPlacement(
+            equipment_id=data.get('equipment_id'),
+            position=position
+        )
+        
         # Validate required fields
-        if not all([username, shop_name, length, width, height]):
-            return jsonify({"error": "All fields are required"}), 400
-
-        shop = create_shop_space(username, shop_name, length, width, height)
-
-        return jsonify({
-            "message": "Shop space created successfully",
-            "shop": shop
-        }), 201
-
+        if placement.equipment_id is None:
+            return jsonify({"error": "Equipment ID is required"}), 400
+        
+        if any(coord is None for coord in [position.x, position.y, position.z]):
+            return jsonify({"error": "All coordinates are required"}), 400
+        
+        # Call function with clean interface (only 2 parameters!)
+        shop = add_equipment_to_shop_space(shop_id, placement)
+        
+        if shop:
+            return jsonify({
+                "message": "Equipment added to shop successfully",
+                "shop": shop
+            }), 200
+        else:
+            return jsonify({"error": "Failed to add equipment"}), 500
+            
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
