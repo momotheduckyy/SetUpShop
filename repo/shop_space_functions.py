@@ -23,26 +23,24 @@ CREATE TABLE IF NOT EXISTS shop_spaces (
 """
 
 # Basic database connection functions
-def _connect_shop_spaces():
-    """Create connection to shop spaces database"""
-    conn = sqlite3.connect(DB_PATH)
+def _connect(db_path):
+    """Create a database connection"""
+    conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA foreign_keys = ON;")
     conn.row_factory = sqlite3.Row
     return conn
+
+def _connect_shop_spaces():
+    """Create connection to shop spaces database"""
+    return _connect(DB_PATH)
 
 def _connect_users():
     """Create connection to users database for validation"""
-    conn = sqlite3.connect(USERS_DB_PATH)
-    conn.execute("PRAGMA foreign_keys = ON;")
-    conn.row_factory = sqlite3.Row
-    return conn
+    return _connect(USERS_DB_PATH)
 
 def _connect_equipment():
     """Create connection to equipment database for validation"""
-    conn = sqlite3.connect(EQUIPMENT_DB_PATH)
-    conn.execute("PRAGMA foreign_keys = ON;")
-    conn.row_factory = sqlite3.Row
-    return conn
+    return _connect(EQUIPMENT_DB_PATH)
 
 def _row_to_dict(row):
     """Convert SQLite row to dictionary with equipment parsing"""
