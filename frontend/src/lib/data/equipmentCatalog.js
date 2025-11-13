@@ -1,0 +1,48 @@
+// frontend/src/lib/data/equipmentCatalog.js
+
+export const equipmentCatalog = [
+  {
+    name: "Table Saw",
+    widthFt: 3,
+    depthFt: 3,
+    color: "#f99",
+    manufacturer: "SawStop",
+    model: "PCS31230",
+    make: "SawStop",
+    maintenanceIntervalDays: 90,
+    maintenanceNotes: "Inspect blade, clean dust collection, check safety brake.",
+  },
+  {
+    name: "Jointer",
+    widthFt: 4,
+    depthFt: 2,
+    color: "#9f9",
+    manufacturer: "Powermatic",
+    model: "PJ-882HH",
+    make: "Powermatic",
+    maintenanceIntervalDays: 120,
+    maintenanceNotes: "Check fence alignment, wax table, inspect cutterhead.",
+  },
+  {
+    name: "Planer",
+    widthFt: 3,
+    depthFt: 2,
+    color: "#99f",
+    manufacturer: "DeWalt",
+    model: "DW735X",
+    make: "DeWalt",
+    maintenanceIntervalDays: 60,
+    maintenanceNotes: "Inspect knives, clear chips, check feed rollers.",
+  },
+  {
+    name: "Band Saw",
+    widthFt: 3,
+    depthFt: 3,
+    color: "#fc6",
+    manufacturer: "Rikon",
+    model: "10-326",
+    make: "Rikon",
+    maintenanceIntervalDays: 180,
+    maintenanceNotes: "Track blade, clean guides, check tires and tension.",
+  },
+];
