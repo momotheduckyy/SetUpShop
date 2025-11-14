@@ -1,4 +1,4 @@
-// frontend/src/lib/models/Equipment.js
+import { MaintenanceTask } from "./MaintenanceTask";
 
 export class Equipment {
   constructor({
@@ -13,27 +13,38 @@ export class Equipment {
     manufacturer = "",
     model = "",
     make = "",
-    maintenanceIntervalDays = null,
-    maintenanceNotes = "",
+    maintenanceTasks = [],
   }) {
     this.id = id;
     this.name = name;
     this.widthFt = widthFt;
     this.depthFt = depthFt;
     this.color = color;
-    this.x = x; // canvas center x in pixels
-    this.y = y; // canvas center y in pixels
+    this.x = x;
+    this.y = y;
     this.rotationDeg = rotationDeg;
 
-    // richer metadata
     this.manufacturer = manufacturer;
     this.model = model;
     this.make = make;
-    this.maintenanceIntervalDays = maintenanceIntervalDays;
-    this.maintenanceNotes = maintenanceNotes;
+
+    // Convert plain objects into MaintenanceTask instances
+    this.maintenanceTasks = maintenanceTasks.map(
+      (task) => new MaintenanceTask(task)
+    );
   }
 
   rotate(deltaDeg) {
     this.rotationDeg = (this.rotationDeg + deltaDeg) % 360;
+  }
+
+  addMaintenanceTask(taskObj) {
+    this.maintenanceTasks.push(new MaintenanceTask(taskObj));
+  }
+
+  markTaskComplete(taskIndex) {
+    if (this.maintenanceTasks[taskIndex]) {
+      this.maintenanceTasks[taskIndex].markComplete();
+    }
   }
 }
