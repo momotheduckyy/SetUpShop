@@ -1,0 +1,39 @@
+// frontend/src/lib/models/Equipment.js
+
+export class Equipment {
+  constructor({
+    id,
+    name,
+    widthFt,
+    depthFt,
+    color = "#aaa",
+    x,
+    y,
+    rotationDeg = 0,
+    manufacturer = "",
+    model = "",
+    make = "",
+    maintenanceIntervalDays = null,
+    maintenanceNotes = "",
+  }) {
+    this.id = id;
+    this.name = name;
+    this.widthFt = widthFt;
+    this.depthFt = depthFt;
+    this.color = color;
+    this.x = x; // canvas center x in pixels
+    this.y = y; // canvas center y in pixels
+    this.rotationDeg = rotationDeg;
+
+    // richer metadata
+    this.manufacturer = manufacturer;
+    this.model = model;
+    this.make = make;
+    this.maintenanceIntervalDays = maintenanceIntervalDays;
+    this.maintenanceNotes = maintenanceNotes;
+  }
+
+  rotate(deltaDeg) {
+    this.rotationDeg = (this.rotationDeg + deltaDeg) % 360;
+  }
+}
