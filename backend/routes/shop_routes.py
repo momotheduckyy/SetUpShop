@@ -126,37 +126,7 @@ def delete_shop(shop_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@shop_bp.route('/<shop_id>/equipment', methods=['POST'])
-def add_equipment_to_shop(shop_id):
-    """Add equipment to shop space"""
-    try:
-        data = request.get_json()
-        equipment_id = data.get('equipment_id')
-        x_coordinate = data.get('x_coordinate')
-        y_coordinate = data.get('y_coordinate')
-        z_coordinate = data.get('z_coordinate')
-
-        # Validate required fields
-        if not all([equipment_id is not None, x_coordinate is not None,
-                    y_coordinate is not None, z_coordinate is not None]):
-            return jsonify({"error": "All fields are required"}), 400
-
-        shop = add_equipment_to_shop_space(
-            shop_id, equipment_id, x_coordinate, y_coordinate, z_coordinate
-        )
-
-        if shop:
-            return jsonify({
-                "message": "Equipment added to shop successfully",
-                "shop": shop
-            }), 200
-        else:
-            return jsonify({"error": "Failed to add equipment"}), 500
-
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+#removed old equipment_from_shop_space route (there was an updated one above from refactor assignment)
 
 @shop_bp.route('/<shop_id>/equipment/<int:equipment_id>', methods=['DELETE'])
 def remove_equipment_from_shop(shop_id, equipment_id):
