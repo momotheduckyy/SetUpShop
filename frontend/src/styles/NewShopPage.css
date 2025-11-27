@@ -1,0 +1,30 @@
+/* Center screen layout */
+.new-shop-container {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #daa845;
+}
+
+/* Form card */
+.new-shop-card {
+  width: 560px;
+  max-width: 90%;
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.shop-form-submit-btn {
+  padding: 0.5rem;
+  width: 100%;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  font-size: 1.5rem;
+}

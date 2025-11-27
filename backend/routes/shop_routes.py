@@ -26,6 +26,44 @@ def get_all_shops():
         return jsonify({"shops": shops}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+@shop_bp.route('/', methods=['POST'])
+def create_shop():
+    """Create a new shop space"""
+    try:
+        data = request.get_json()
+
+        username = data.get('username')
+        shop_name = data.get('shop_name')
+        length = data.get('length')
+        width = data.get('width')
+        height = data.get('height')
+
+        # basic validation
+        if not username or not shop_name:
+            return jsonify({"error": "username and shop_name are required"}), 400
+
+        if any(v is None for v in [length, width, height]):
+            return jsonify({"error": "length, width, and height are required"}), 400
+
+        # NOTE: adjust this call if your create_shop_space signature is different
+        shop = create_shop_space(
+            username=username,
+            shop_name=shop_name,
+            length=length,
+            width=width,
+            height=height,
+        )
+
+        return jsonify({
+            "message": "Shop created successfully",
+            "shop": shop
+        }), 201
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @shop_bp.route('/<shop_id>/equipment', methods=['POST'])
 def add_equipment_to_shop(shop_id):
     """Add equipment to shop space"""
