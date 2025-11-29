@@ -3,13 +3,37 @@
   padding: 40px;
   max-width: 1200px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Back button styling - fully top left */
+.back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #4a90e2;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s ease;
+  z-index: 10;
+}
+
+.back-btn:hover {
+  background: #357abd;
 }
 
 /* Page title styling */
 .shop-spaces-container h2 {
   font-size: 32px;
   color: #333;
-  margin-bottom: 24px;
+  margin: 0 0 24px 0;
+  text-align: center;
 }
 
 /* Grid layout for shop space cards */
@@ -17,6 +41,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
+  width: 100%;
 }
 
 /* Individual shop space card styling */
