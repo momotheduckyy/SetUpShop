@@ -1,13 +1,22 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'          // 👈 NEW
-import { getShopsByUsername } from '../services/api'
+import { useNavigate } from 'react-router-dom'
+import { getShopsByUsername, createShop } from '../services/api'
 import '../styles/ShopSpaces.css'
 
 function ShopSpaces({ user }) {
   const [shopSpaces, setShopSpaces] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState('')
+  const [newShopForm, setNewShopForm] = useState({
+    shopName: '',
+    length: 40,
+    width: 30,
+    height: 10
+  })
 
-  const navigate = useNavigate()                       // 👈 NEW
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchShopSpaces()
@@ -21,6 +30,67 @@ function ShopSpaces({ user }) {
     } catch (err) {
       console.error(err)
       setLoading(false)
+    }
+  }
+
+  const handleOpenModal = () => {
+    setShowCreateModal(true)
+    setCreateError('')
+    setNewShopForm({
+      shopName: '',
+      length: 40,
+      width: 30,
+      height: 10
+    })
+  }
+
+  const handleCloseModal = () => {
+    setShowCreateModal(false)
+    setCreateError('')
+  }
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target
+    setNewShopForm(prev => ({
+      ...prev,
+      [name]: name === 'shopName' ? value : Number(value)
+    }))
+  }
+
+  const handleCreateShop = async (e) => {
+    e.preventDefault()
+
+    // Validation
+    if (!newShopForm.shopName.trim()) {
+      setCreateError('Shop name is required')
+      return
+    }
+    if (newShopForm.length <= 0 || newShopForm.width <= 0 || newShopForm.height <= 0) {
+      setCreateError('Dimensions must be greater than 0')
+      return
+    }
+
+    setCreating(true)
+    setCreateError('')
+
+    try {
+      const response = await createShop({
+        username: user.username,
+        shop_name: newShopForm.shopName,
+        length: newShopForm.length,
+        width: newShopForm.width,
+        height: newShopForm.height
+      })
+
+      // Success - close modal, refresh list, navigate to new shop
+      const newShopId = response.shop.shop_id
+      handleCloseModal()
+      await fetchShopSpaces()
+      navigate(`/shops/${newShopId}`)
+    } catch (err) {
+      setCreateError(err.message || 'Failed to create shop')
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -41,6 +111,11 @@ function ShopSpaces({ user }) {
         ← Back to Dashboard
       </button>
       <h2>My Shop Spaces</h2>
+
+      <button className="create-shop-btn" onClick={handleOpenModal}>
+        + Create New Shop
+      </button>
+
       <div className="shop-spaces-list">
         {shopSpaces.length === 0 ? (
           <p>No shop spaces found</p>
@@ -65,6 +140,107 @@ function ShopSpaces({ user }) {
           })
         )}
       </div>
+
+      {/* Create Shop Modal */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Create New Shop Space</h3>
+              <button className="modal-close-btn" onClick={handleCloseModal}>
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateShop}>
+              <div className="modal-body">
+                {createError && (
+                  <div className="error-message">{createError}</div>
+                )}
+
+                <div className="form-group">
+                  <label htmlFor="shopName">Shop Name *</label>
+                  <input
+                    type="text"
+                    id="shopName"
+                    name="shopName"
+                    value={newShopForm.shopName}
+                    onChange={handleFormChange}
+                    placeholder="e.g., Garage Workshop"
+                    required
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="length">Length (ft) *</label>
+                    <input
+                      type="number"
+                      id="length"
+                      name="length"
+                      value={newShopForm.length}
+                      onChange={handleFormChange}
+                      min="1"
+                      step="0.1"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="width">Width (ft) *</label>
+                    <input
+                      type="number"
+                      id="width"
+                      name="width"
+                      value={newShopForm.width}
+                      onChange={handleFormChange}
+                      min="1"
+                      step="0.1"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="height">Height (ft) *</label>
+                    <input
+                      type="number"
+                      id="height"
+                      name="height"
+                      value={newShopForm.height}
+                      onChange={handleFormChange}
+                      min="1"
+                      step="0.1"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <p className="form-hint">
+                  You can add equipment to your shop after creation using the drag-and-drop interface.
+                </p>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={handleCloseModal}
+                  disabled={creating}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={creating}
+                >
+                  {creating ? 'Creating...' : 'Create Shop'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
