@@ -1,6 +1,27 @@
 .shop-layout-container {
   display: flex;
   height: 100vh;
+  position: relative;
+}
+
+/* Back button styling - top left on main workspace area */
+.back-btn-shop {
+  position: absolute;
+  top: 20px;
+  left: 280px; /* Position after sidebar (260px width + 20px margin) */
+  background: #4a90e2;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s ease;
+  z-index: 1000;
+}
+
+.back-btn-shop:hover {
+  background: #357abd;
 }
 
 .shop-center-message {

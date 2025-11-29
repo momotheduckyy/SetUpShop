@@ -273,6 +273,12 @@ async function handleSaveAndReturn() {
 
   return (
     <main className="shop-layout-container">
+      <button
+        className="back-btn-shop"
+        onClick={() => navigate('/shop-spaces')}
+      >
+        ← Back to My Shop Spaces
+      </button>
       <ShopSidebar
         shop={shop}
         shopId={shopId}

@@ -34,6 +34,12 @@ function ShopSpaces({ user }) {
 
   return (
     <div className="shop-spaces-container">
+      <button
+        className="back-btn"
+        onClick={() => navigate('/dashboard')}
+      >
+        ← Back to Dashboard
+      </button>
       <h2>My Shop Spaces</h2>
       <div className="shop-spaces-list">
         {shopSpaces.length === 0 ? (
