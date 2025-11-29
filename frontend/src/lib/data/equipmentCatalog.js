@@ -2,6 +2,7 @@
 
 export const equipmentCatalog = [
   {
+    id: 1,
     name: "Table Saw",
     widthFt: 3,
     depthFt: 3,
@@ -13,6 +14,7 @@ export const equipmentCatalog = [
     maintenanceNotes: "Inspect blade, clean dust collection, check safety brake.",
   },
   {
+    id: 2,
     name: "Jointer",
     widthFt: 4,
     depthFt: 2,
@@ -24,6 +26,7 @@ export const equipmentCatalog = [
     maintenanceNotes: "Check fence alignment, wax table, inspect cutterhead.",
   },
   {
+    id: 3,
     name: "Planer",
     widthFt: 3,
     depthFt: 2,
@@ -35,6 +38,7 @@ export const equipmentCatalog = [
     maintenanceNotes: "Inspect knives, clear chips, check feed rollers.",
   },
   {
+    id: 4,
     name: "Band Saw",
     widthFt: 3,
     depthFt: 3,

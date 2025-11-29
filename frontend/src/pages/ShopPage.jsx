@@ -1,17 +1,20 @@
-// frontend/src/components/ShopPage.jsx
+// frontend/src/pages/ShopPage.jsx
 
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Shop } from "../lib/models/Shop";
 import { equipmentCatalog } from "../lib/data/equipmentCatalog";
 import ShopCanvas from "../components/ShopCanvas";
+import ShopSidebar from "../components/ShopSidebar";
+import { addEquipmentToShop } from "../services/api";
 import "../styles/ShopPage.css";
 
 const API_BASE = "http://localhost:5001/api";
 
 export default function ShopPage() {
   const { shopId } = useParams();
+  const navigate = useNavigate();
 
   const [shop, setShop] = useState(null);
   const [zoom, setZoom] = useState(1);
@@ -21,8 +24,18 @@ export default function ShopPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isEditing, setIsEditing] = useState(true);
 
+  // Form state for shop meta (name + dimensions)
+  const [shopForm, setShopForm] = useState({
+    name: "",
+    length: 40,
+    width: 30,
+    height: 10,
+  });
 
-
+  // Save state (for the Save button)
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Fetch shop details from backend
   useEffect(() => {
@@ -40,39 +53,82 @@ export default function ShopPage() {
           return;
         }
 
-        // Map backend fields to our Shop model
         const name = data.shop_name || data.name || `Shop ${shopId}`;
-        const length = data.length ?? 40;
-        const width = data.width ?? 30;
+
+        // Support both flat dimensions and future nested shop_size
+        let length, width, height;
+
+        if (data.shop_size) {
+          const sz = data.shop_size;
+          length = sz.length ?? sz.lengthFt ?? 40;
+          width = sz.width ?? sz.widthFt ?? 30;
+          height = sz.height ?? sz.heightFt ?? 10;
+        } else {
+          length = data.length ?? 40;
+          width = data.width ?? 30;
+          height = data.height ?? 10;
+        }
 
         const shopInstance = new Shop(name, length, width, 10);
 
-        // Optional: map equipment placements from backend
-        if (Array.isArray(data.equipment)) {
-          for (const eq of data.equipment) {
-            shopInstance.equipment_list.push({
-              id: eq.id,
-              name: eq.name,
-              widthFt: eq.widthFt,
-              depthFt: eq.depthFt,
-              x: eq.x,
-              y: eq.y,
-              rotationDeg: eq.rotationDeg || 0,
-              color: eq.color || "#aaa",
-              manufacturer: eq.manufacturer,
-              model: eq.model,
-              maintenanceIntervalDays: eq.maintenanceIntervalDays,
-              maintenanceNotes: eq.maintenanceNotes,
-            });
-          }
-        }
+if (Array.isArray(data.equipment)) {
+  for (const placement of data.equipment) {
+    // placement is something like:
+    // { equipment_id, x_coordinate, y_coordinate, z_coordinate, date_added }
+
+    const catalogItem = equipmentCatalog.find(
+      (item) => item.id === placement.equipment_id
+    );
+
+    if (!catalogItem) {
+      console.warn("No catalog item for equipment_id", placement.equipment_id);
+      continue;
+    }
+
+    // Build the same shape you use in drag-drop
+    const eqConfig = {
+      name: catalogItem.name,
+      widthFt: catalogItem.widthFt,
+      depthFt: catalogItem.depthFt,
+      color: catalogItem.color,
+      manufacturer: catalogItem.manufacturer,
+      model: catalogItem.model,
+      make: catalogItem.make,
+      maintenanceIntervalDays: catalogItem.maintenanceIntervalDays,
+      maintenanceNotes: catalogItem.maintenanceNotes,
+      // you *can* stash backend ID if you want later:
+      backendEquipmentId: placement.equipment_id,
+    };
+
+    // Use the same helper as when you drag from the sidebar
+    shopInstance.addEquipment(
+      eqConfig,
+      placement.x_coordinate,
+      placement.y_coordinate
+    );
+  }
+}
+
 
         setShop(shopInstance);
+
+        // Initialize form from loaded values
+        setShopForm({
+          name,
+          length,
+          width,
+          height,
+        });
+
         setSelectedId(null);
         setRenderTick((t) => t + 1);
         setLoading(false);
       } catch (err) {
-        console.error("Failed to load shop:", err);
+        console.error(
+          "Failed to load shop:",
+          err.response?.status,
+          err.response?.data || err.message
+        );
         setErrorMsg("Failed to load shop from server.");
         setLoading(false);
       }
@@ -81,20 +137,63 @@ export default function ShopPage() {
     fetchShop();
   }, [shopId]);
 
-// Toggle editing mode for shop details  
-function toggleEditing() {
-  setIsEditing((prev) => !prev);
-}
+  // 🔄 Whenever form dimensions change, update the Shop instance + re-render canvas
+  useEffect(() => {
+    if (!shop) return;
+
+    // Decide which is length vs width. To stay consistent with how you
+    // constructed Shop(name, length, width, 10), we map:
+    //  - shop.depthFt = length
+    //  - shop.widthFt = width
+    shop.depthFt = shopForm.length;
+    shop.widthFt = shopForm.width;
+    // height not used in 2D canvas yet, but we keep it in form for future.
+
+    setRenderTick((t) => t + 1);
+  }, [shop, shopForm.length, shopForm.width]);
+
+  // Toggle editing mode for the form
+  function toggleEditing() {
+    setIsEditing((prev) => !prev);
+  }
+
+  // Keep form in sync as user types
+  function handleShopFormChange(e) {
+    const { name, value } = e.target;
+    setShopForm((prev) => ({
+      ...prev,
+      [name]:
+        name === "length" || name === "width" || name === "height"
+          ? Number(value)
+          : value,
+    }));
+  }
 
   function handleDragStart(e, eq) {
     e.dataTransfer.setData("application/json", JSON.stringify(eq));
   }
 
-  function handleDropEquipment(eqConfig, x, y) {
-    if (!shop) return;
-    shop.addEquipment(eqConfig, x, y);
-    setRenderTick((t) => t + 1);
+async function handleDropEquipment(eqConfig, x, y) {
+  if (!shop) return;
+
+  // optimistic update for canvas
+  shop.addEquipment(eqConfig, x, y);
+  setRenderTick((t) => t + 1);
+
+  try {
+    await addEquipmentToShop(shopId, {
+      equipmentId: eqConfig.id, // make sure eqConfig.id exists
+      x,
+      y,
+      z: 0,
+    });
+  } catch (err) {
+    console.error("Failed to save placement:", err);
+    // optional: rollback or show a toast
   }
+}
+
+
 
   function rotateSelected(delta) {
     if (selectedId == null || !shop) return;
@@ -104,6 +203,49 @@ function toggleEditing() {
 
   const selectedEq =
     selectedId != null && shop ? shop.getEquipmentById(selectedId) : null;
+
+  // 💾 Save and return to shop list
+async function handleSaveAndReturn() {
+  if (!shop) return;
+
+  setIsSaving(true);
+  setSaveError("");
+  setSaveSuccess(false);
+
+  try {
+    const payload = {
+      length: shopForm.length,
+      width: shopForm.width,
+      height: shopForm.height,
+    };
+
+    const res = await axios.put(`${API_BASE}/shops/${shopId}`, payload);
+    const updated = res.data.shop;
+
+    // Sync with returned values (optional safety)
+    if (updated) {
+      const length = updated.length ?? shopForm.length;
+      const width = updated.width ?? shopForm.width;
+      const height = updated.height ?? shopForm.height;
+
+      shop.depthFt = length;
+      shop.widthFt = width;
+
+      setShopForm({ name: shopForm.name, length, width, height });
+      setRenderTick((t) => t + 1);
+    }
+
+    // 🚀 Navigate back to list
+    navigate("/shop-spaces");
+
+  } catch (err) {
+    console.error("Failed to save shop:", err);
+    setSaveError("Failed to save shop.");
+  } finally {
+    setIsSaving(false);
+  }
+}
+
 
   if (loading) {
     return (
@@ -129,92 +271,29 @@ function toggleEditing() {
     );
   }
 
-  // Main layout view
   return (
     <main className="shop-layout-container">
-      {/* Sidebar */}
-      <aside className="shop-sidebar">
-        <div className="shop-header">
-          <h3>{shop.name}</h3>
-          <p className="shop-dimensions">
-            {shop.widthFt} × {shop.depthFt} ft
-          </p>
-          <p className="shop-id">
-            ID: <strong>{shopId}</strong>
-          </p>
-        </div>
+      <ShopSidebar
+        shop={shop}
+        shopId={shopId}
+        equipmentCatalog={equipmentCatalog}
+        onDragStart={handleDragStart}
+        zoom={zoom}
+        setZoom={setZoom}
+        selectedEq={selectedEq}
+        rotateSelected={rotateSelected}
+        isEditing={isEditing}
+        toggleEditing={toggleEditing}
+        // form + handlers
+        shopForm={shopForm}
+        onShopFormChange={handleShopFormChange}
+        // save wiring
+        onSaveAndReturn={handleSaveAndReturn}
+        isSaving={isSaving}
+        saveError={saveError}
+        saveSuccess={saveSuccess}
+      />
 
-        {/* Equipment list for drag/drop */}
-        <div>
-          <h4>Equipment</h4>
-          {equipmentCatalog.map((eq) => (
-            <div
-              key={eq.name}
-              className="equipment-tile"
-              draggable
-              onDragStart={(e) => handleDragStart(e, eq)}
-            >
-              {eq.name}
-            </div>
-          ))}
-        </div>
-
-        {/* Zoom controls */}
-        <div className="zoom-controls">
-          <h4>Zoom</h4>
-          <div className="zoom-buttons">
-            <button onClick={() => setZoom((z) => Math.min(z + 0.1, 2))}>
-              +
-            </button>
-            <button onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}>
-              −
-            </button>
-            <button onClick={() => setZoom(1)}>Reset</button>
-          </div>
-          <p className="zoom-display">
-            {Math.round(zoom * 100)}%
-          </p>
-        </div>
-
-        {/* Selected equipment details */}
-        <div className="selected-panel">
-          <h4>Selected Equipment</h4>
-          {selectedEq ? (
-            <div>
-              <p>
-                <strong>{selectedEq.name}</strong>
-              </p>
-              {selectedEq.manufacturer && (
-                <p>Manufacturer: {selectedEq.manufacturer}</p>
-              )}
-              {selectedEq.model && <p>Model: {selectedEq.model}</p>}
-              {selectedEq.maintenanceIntervalDays && (
-                <p>
-                  Maintenance: every {selectedEq.maintenanceIntervalDays} days
-                </p>
-              )}
-              {selectedEq.maintenanceNotes && (
-                <p className="selected-notes">
-                  Notes: {selectedEq.maintenanceNotes}
-                </p>
-              )}
-
-              <div className="rotation-buttons">
-                <button onClick={() => rotateSelected(-15)}>
-                  Rotate -15°
-                </button>
-                <button onClick={() => rotateSelected(15)}>
-                  Rotate +15°
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p>Click a machine in the layout.</p>
-          )}
-        </div>
-      </aside>
-
-      {/* Canvas workspace */}
       <section className="shop-workspace">
         <ShopCanvas
           shop={shop}
