@@ -1,8 +1,9 @@
 // frontend/src/components/ShopSidebar.jsx
 
 import React from "react";
-import "../styles/ShopPage.css";
-import "../styles/ShopForm.css"; // for .shop-form-edit-btn styling
+import ShopForm from "./ShopForm";
+import SaveButton from "./SaveButton";
+import "../styles/ShopSidebar.css";
 
 export default function ShopSidebar({
   shop,
@@ -15,22 +16,29 @@ export default function ShopSidebar({
   rotateSelected,
   isEditing,
   toggleEditing,
+  shopForm,
+  onShopFormChange,
+  onSaveAndReturn,
+  isSaving,
+  saveError,
+  saveSuccess,
 }) {
   return (
     <aside className="shop-sidebar">
-      {/* Header & edit toggle */}
+      {/* Header + Edit toggle */}
       <div className="shop-header">
-        <h3>{shop.name}</h3>
-        <p className="shop-dimensions">
-          {shop.widthFt} × {shop.depthFt} ft
-        </p>
-        <p className="shop-id">
-          ID: <strong>{shopId}</strong>
-        </p>
-
+              {/* Shop metadata form */}
+      {shopForm && (
+        <ShopForm
+          newShopForm={shopForm}
+          onChange={onShopFormChange}
+          isEditing={isEditing}
+          shopId={shopId}
+        />
+      )}
         <button
           type="button"
-          className={`shop-form-edit-btn ${isEditing ? "editing" : ""}`}
+          className={`shop-edit-btn ${isEditing ? "editing" : ""}`}
           onClick={toggleEditing}
         >
           {isEditing ? "Done" : "Edit"}
@@ -56,9 +64,7 @@ export default function ShopSidebar({
       <div className="zoom-controls">
         <h4>Zoom</h4>
         <div className="zoom-buttons">
-          <button onClick={() => setZoom((z) => Math.min(z + 0.1, 2))}>
-            +
-          </button>
+          <button onClick={() => setZoom((z) => Math.min(z + 0.1, 2))}>+</button>
           <button onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}>
             −
           </button>
@@ -80,14 +86,10 @@ export default function ShopSidebar({
             )}
             {selectedEq.model && <p>Model: {selectedEq.model}</p>}
             {selectedEq.maintenanceIntervalDays && (
-              <p>
-                Maintenance: every {selectedEq.maintenanceIntervalDays} days
-              </p>
+              <p>Maintenance: every {selectedEq.maintenanceIntervalDays} days</p>
             )}
             {selectedEq.maintenanceNotes && (
-              <p className="selected-notes">
-                Notes: {selectedEq.maintenanceNotes}
-              </p>
+              <p className="selected-notes">Notes: {selectedEq.maintenanceNotes}</p>
             )}
 
             <div className="rotation-buttons">
@@ -99,6 +101,22 @@ export default function ShopSidebar({
           <p>Click a machine in the layout.</p>
         )}
       </div>
+           {/* Save & Return */}
+      <div className="shop-save-row">
+        <SaveButton
+          onClick={onSaveAndReturn}
+          isSaving={isSaving}
+          disabled={!isEditing}
+          label="Save & Return"
+        />
+
+        {saveError && (
+          <span className="shop-save-status shop-save-status--error">
+            {saveError}
+          </span>
+        )}
+      </div>
+
     </aside>
   );
 }

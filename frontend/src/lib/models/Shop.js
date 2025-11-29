@@ -2,49 +2,45 @@
 import { Equipment } from "./Equipment";
 
 export class Shop {
-  constructor(name, widthFt, depthFt, pixelsPerFoot = 10) {
+  constructor(name, widthFt, depthFt, scale) {
     this.name = name;
     this.widthFt = widthFt;
     this.depthFt = depthFt;
-    this.pixelsPerFoot = pixelsPerFoot;
+    this.scale = scale;
     this.equipment_list = [];
-    this._nextId = 0;
+    this._nextLocalId = 1;
   }
 
-  toPixels(feet) {
-    return feet * this.pixelsPerFoot;
+  toPixels(ft) {
+    return ft * this.scale;
   }
 
   addEquipment(config, x, y) {
-    const eq = new Equipment({
-      id: this._nextId++,
+    const equipment = new Equipment({
+      // local id used only for canvas selection
+      id: this._nextLocalId++,
       name: config.name,
-      widthFt: config.widthFt ?? 3,
-      depthFt: config.depthFt ?? 3,
-      color: config.color ?? "#aaa",
+      widthFt: config.widthFt,
+      depthFt: config.depthFt,
+      color: config.color,
       x,
       y,
       rotationDeg: 0,
-      manufacturer: config.manufacturer ?? "",
-      model: config.model ?? "",
-      make: config.make ?? "",
-      maintenanceIntervalDays: config.maintenanceIntervalDays ?? null,
-      maintenanceNotes: config.maintenanceNotes ?? "",
+
+      // 🔑 Keep a reference to backend equipment id if present
+      equipmentDbId: config.equipment_id || config.id || null,
+      manufacturer: config.manufacturer,
+      model: config.model,
+      maintenanceIntervalDays: config.maintenanceIntervalDays,
+      maintenanceNotes: config.maintenanceNotes,
     });
 
-    this.equipment_list.push(eq);
-    return eq;
-  }
-
-  moveEquipment(id, x, y) {
-    const eq = this.equipment_list.find((e) => e.id === id);
-    if (!eq) return;
-    eq.x = x;
-    eq.y = y;
+    this.equipment_list.push(equipment);
+    return equipment; // 👈 useful when we want the instance back
   }
 
   rotateEquipment(id, deltaDeg) {
-    const eq = this.equipment_list.find((e) => e.id === id);
+    const eq = this.getEquipmentById(id);
     if (!eq) return;
     eq.rotate(deltaDeg);
   }

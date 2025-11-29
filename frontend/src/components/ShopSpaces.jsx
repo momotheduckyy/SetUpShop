@@ -1,27 +1,26 @@
-// frontend/src/components/ShopSpaces.jsx
-
-import React, { useEffect, useState } from "react";
-import { getShopsByUsername } from "../services/api";
-import { useNavigate } from "react-router-dom";
-import "../styles/ShopSpaces.css";
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'          // 👈 NEW
+import { getShopsByUsername } from '../services/api'
+import '../styles/ShopSpaces.css'
 
 function ShopSpaces({ user }) {
-  const [shopSpaces, setShopSpaces] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [shopSpaces, setShopSpaces] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const navigate = useNavigate()                       // 👈 NEW
 
   useEffect(() => {
-    fetchShopSpaces();
-  }, [user]);
+    fetchShopSpaces()
+  }, [user])
 
-  async function fetchShopSpaces() {
+  const fetchShopSpaces = async () => {
     try {
-      const data = await getShopsByUsername(user.username);
-      setShopSpaces(data.shops || []);
-      setLoading(false);
+      const data = await getShopsByUsername(user.username)
+      setShopSpaces(data.shops || [])
+      setLoading(false)
     } catch (err) {
-      console.error(err);
-      setLoading(false);
+      console.error(err)
+      setLoading(false)
     }
   }
 
@@ -30,38 +29,38 @@ function ShopSpaces({ user }) {
       <div className="shop-spaces-container">
         <h2>Loading...</h2>
       </div>
-    );
+    )
   }
 
   return (
     <div className="shop-spaces-container">
       <h2>My Shop Spaces</h2>
-
-      {/* ➕ Create New Shop button */}
-      <button
-        className="create-shop-btn"
-        onClick={() => navigate("/new-shop")}
-      >
-        + Create New Shop
-      </button>
-
       <div className="shop-spaces-list">
         {shopSpaces.length === 0 ? (
           <p>No shop spaces found</p>
         ) : (
-          shopSpaces.map((space) => (
-            <div key={space.shop_id} className="shop-space-card">
-              <h3>{space.shop_name}</h3>
-              <p>
-                Dimensions: {space.length} × {space.width} × {space.height} ft
-              </p>
-              <p>Equipment: {space.equipment.length} items</p>
-            </div>
-          ))
+          shopSpaces.map((space) => {
+            const id = space.shop_id || space.id          // 👈 handle either field name
+
+            return (
+              <div
+                key={id}
+                className="shop-space-card"
+                onClick={() => navigate(`/shops/${id}`)}   // 👈 navigate to editor
+                style={{ cursor: 'pointer' }}              // 👈 visual hint
+              >
+                <h3>{space.shop_name}</h3>
+                <p>
+                  Dimensions: {space.length} × {space.width} × {space.height} ft
+                </p>
+                <p>Equipment: {space.equipment?.length ?? 0} items</p>
+              </div>
+            )
+          })
         )}
       </div>
     </div>
-  );
+  )
 }
 
-export default ShopSpaces;
+export default ShopSpaces

@@ -13,12 +13,15 @@ from shop_space_functions import (
     remove_equipment_from_shop_space,
     update_shop_space_dimensions,
     delete_shop_space,
-    get_all_shop_spaces
+    get_all_shop_spaces,
 )
 from models.placement import Position, EquipmentPlacement
-shop_bp = Blueprint('shops', __name__)
+from models.shop_size import ShopSize   # 👈 correct import
 
-@shop_bp.route('/', methods=['GET'])
+shop_bp = Blueprint("shops", __name__)
+
+
+@shop_bp.route("/", methods=["GET"])
 def get_all_shops():
     """Get all shop spaces"""
     try:
@@ -26,26 +29,37 @@ def get_all_shops():
         return jsonify({"shops": shops}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-@shop_bp.route('/', methods=['POST'])
+
+
+@shop_bp.route("/", methods=["POST"])
 def create_shop():
     """Create a new shop space"""
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
 
-        username = data.get('username')
-        shop_name = data.get('shop_name')
-        length = data.get('length')
-        width = data.get('width')
-        height = data.get('height')
+        username = data.get("username")
+        shop_name = data.get("shop_name")
+
+        # 🔑 Prefer nested shop_size object if present
+        shop_size_data = data.get("shop_size") or data.get("shopSize")
+        if shop_size_data:
+            shop_size = ShopSize.from_dict(shop_size_data)
+            length, width, height = shop_size.to_db_dimensions()
+        else:
+            # fallback: old-style top-level length/width/height
+            length = data.get("length")
+            width = data.get("width")
+            height = data.get("height")
 
         # basic validation
         if not username or not shop_name:
             return jsonify({"error": "username and shop_name are required"}), 400
 
         if any(v is None for v in [length, width, height]):
-            return jsonify({"error": "length, width, and height are required"}), 400
+            return jsonify(
+                {"error": "length, width, and height are required"}
+            ), 400
 
-        # NOTE: adjust this call if your create_shop_space signature is different
         shop = create_shop_space(
             username=username,
             shop_name=shop_name,
@@ -54,15 +68,18 @@ def create_shop():
             height=height,
         )
 
-        return jsonify({
-            "message": "Shop created successfully",
-            "shop": shop
-        }), 201
+        return jsonify(
+            {
+                "message": "Shop created successfully",
+                "shop": shop,
+            }
+        ), 201
 
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @shop_bp.route('/<shop_id>/equipment', methods=['POST'])
 def add_equipment_to_shop(shop_id):
