@@ -20,7 +20,10 @@ CREATE TABLE IF NOT EXISTS equipment_types (
     height INTEGER NOT NULL,
     depth INTEGER NOT NULL,
     maintenance_interval_days INTEGER NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    color TEXT DEFAULT '#aaa',
+    manufacturer TEXT,
+    model TEXT
 );
 
 -- Actual equipment that users own

@@ -4,19 +4,19 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Shop } from "../lib/models/Shop";
-import { equipmentCatalog } from "../lib/data/equipmentCatalog";
 import ShopCanvas from "../components/ShopCanvas";
 import ShopSidebar from "../components/ShopSidebar";
-import { addEquipmentToShop } from "../services/api";
+import { addEquipmentToShop, getUserEquipment } from "../services/api";
 import "../styles/ShopPage.css";
 
 const API_BASE = "http://localhost:5001/api";
 
-export default function ShopPage() {
+export default function ShopPage({ user }) {
   const { shopId } = useParams();
   const navigate = useNavigate();
 
   const [shop, setShop] = useState(null);
+  const [userEquipment, setUserEquipment] = useState([]);
   const [zoom, setZoom] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
   const [renderTick, setRenderTick] = useState(0);
@@ -71,43 +71,13 @@ export default function ShopPage() {
 
         const shopInstance = new Shop(name, length, width, 10);
 
-if (Array.isArray(data.equipment)) {
-  for (const placement of data.equipment) {
-    // placement is something like:
-    // { equipment_id, x_coordinate, y_coordinate, z_coordinate, date_added }
-
-    const catalogItem = equipmentCatalog.find(
-      (item) => item.id === placement.equipment_id
-    );
-
-    if (!catalogItem) {
-      console.warn("No catalog item for equipment_id", placement.equipment_id);
-      continue;
-    }
-
-    // Build the same shape you use in drag-drop
-    const eqConfig = {
-      name: catalogItem.name,
-      widthFt: catalogItem.widthFt,
-      depthFt: catalogItem.depthFt,
-      color: catalogItem.color,
-      manufacturer: catalogItem.manufacturer,
-      model: catalogItem.model,
-      make: catalogItem.make,
-      maintenanceIntervalDays: catalogItem.maintenanceIntervalDays,
-      maintenanceNotes: catalogItem.maintenanceNotes,
-      // you *can* stash backend ID if you want later:
-      backendEquipmentId: placement.equipment_id,
-    };
-
-    // Use the same helper as when you drag from the sidebar
-    shopInstance.addEquipment(
-      eqConfig,
-      placement.x_coordinate,
-      placement.y_coordinate
-    );
-  }
-}
+// Load equipment placements from shop
+        // Note: This runs before userEquipment is loaded, so we'll store placements
+        // and apply them after equipment loads
+        if (Array.isArray(data.equipment)) {
+          // Store placements to apply after user equipment loads
+          shopInstance._pendingPlacements = data.equipment;
+        }
 
 
         setShop(shopInstance);
@@ -136,6 +106,64 @@ if (Array.isArray(data.equipment)) {
 
     fetchShop();
   }, [shopId]);
+
+  // Fetch user's equipment for the sidebar
+  useEffect(() => {
+    async function fetchUserEquipment() {
+      if (!user || !user.id) return;
+
+      try {
+        const response = await getUserEquipment(user.id);
+        const equipment = response.equipment || [];
+
+        // Transform equipment to match canvas format
+        const transformedEquipment = equipment.map(eq => ({
+          id: eq.id,  // user_equipment.id
+          name: eq.equipment_name,
+          widthFt: eq.width,
+          depthFt: eq.depth,
+          color: eq.color || '#aaa',
+          manufacturer: eq.manufacturer || '',
+          model: eq.model || '',
+          maintenanceIntervalDays: eq.maintenance_interval_days,
+          maintenanceNotes: eq.notes || ''
+        }));
+
+        setUserEquipment(transformedEquipment);
+      } catch (err) {
+        console.error("Failed to load user equipment:", err);
+      }
+    }
+
+    fetchUserEquipment();
+  }, [user]);
+
+  // Apply pending equipment placements once both shop and userEquipment are loaded
+  useEffect(() => {
+    if (!shop || !shop._pendingPlacements || userEquipment.length === 0) return;
+
+    const placements = shop._pendingPlacements;
+    shop._pendingPlacements = null; // Clear to avoid re-applying
+
+    for (const placement of placements) {
+      // Find equipment in user's inventory
+      const userEq = userEquipment.find(eq => eq.id === placement.equipment_id);
+
+      if (!userEq) {
+        console.warn("Equipment not found in user inventory:", placement.equipment_id);
+        continue;
+      }
+
+      // Add equipment to shop with saved position
+      shop.addEquipment(
+        userEq,
+        placement.x_coordinate,
+        placement.y_coordinate
+      );
+    }
+
+    setRenderTick(t => t + 1);
+  }, [shop, userEquipment]);
 
   // 🔄 Whenever form dimensions change, update the Shop instance + re-render canvas
   useEffect(() => {
@@ -282,7 +310,7 @@ async function handleSaveAndReturn() {
       <ShopSidebar
         shop={shop}
         shopId={shopId}
-        equipmentCatalog={equipmentCatalog}
+        equipmentCatalog={userEquipment}
         onDragStart={handleDragStart}
         zoom={zoom}
         setZoom={setZoom}
