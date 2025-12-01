@@ -1,4 +1,5 @@
 // frontend/src/App.jsx
+import MaintenancePage from './pages/MaintenancePage'
 import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
@@ -48,6 +49,13 @@ function App() {
             path="/equipment-catalog"
             element={user ? <EquipmentCatalog /> : <Navigate to="/login" />}
           />
+
+          {/* Maintenance */}
+          <Route
+            path="/maintenance"
+            element={user ? <MaintenancePage user={user} /> : <Navigate to="/login" />}
+          />
+
 
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
