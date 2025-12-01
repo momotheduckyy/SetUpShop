@@ -129,14 +129,6 @@ def record_maintenance(equipment_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@equipment_bp.route('/user/<int:user_id>/maintenance-summary', methods=['GET'])
-def get_user_maintenance_summary(user_id):
-    """Get maintenance summary for user"""
-    try:
-        summary = get_maintenance_summary(user_id)
-        return jsonify({"summary": summary}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @equipment_bp.route('/maintenance-schedule/<int:user_id>', methods=['GET'])
 def get_maintenance_schedule_route(user_id):
