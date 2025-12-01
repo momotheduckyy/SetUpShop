@@ -79,6 +79,27 @@ def _validate_equipment_exists(equipment_id):
     except Exception:
         return False
 
+def _validate_equipment_belongs_to_user(equipment_id, username):
+    """Check if equipment exists and belongs to the user who owns the shop"""
+    try:
+        # First get user_id from username
+        with _connect_users() as conn:
+            cursor = conn.execute("SELECT id FROM users WHERE username = ?", (username,))
+            user_row = cursor.fetchone()
+            if not user_row:
+                return False
+            user_id = user_row['id']
+
+        # Then check if equipment belongs to that user
+        with _connect_equipment() as conn:
+            cursor = conn.execute(
+                "SELECT id FROM user_equipment WHERE id = ? AND user_id = ?",
+                (equipment_id, user_id)
+            )
+            return cursor.fetchone() is not None
+    except Exception:
+        return False
+
 def init_shop_spaces_db(db_path: Path = DB_PATH):
     """Initialize the shop spaces database with required tables"""
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -163,7 +184,7 @@ def get_shop_spaces_by_username(username):
 def add_equipment_to_shop_space(shop_id, placement):
     """
     Add equipment to a shop space with placement coordinates
-        
+
     Returns:
         dict: Updated shop space data or None if failed
     """
@@ -171,18 +192,18 @@ def add_equipment_to_shop_space(shop_id, placement):
     shop_space = get_shop_space_by_id(shop_id)
     if not shop_space:
         raise ValueError(f"Shop space with ID '{shop_id}' does not exist")
-    
-    # Validate equipment exists
-    if not _validate_equipment_exists(placement.equipment_id):
-        raise ValueError(f"Equipment with ID {placement.equipment_id} does not exist")
-    
+
+    # Validate equipment exists and belongs to the shop owner
+    if not _validate_equipment_belongs_to_user(placement.equipment_id, shop_space['username']):
+        raise ValueError(f"Equipment with ID {placement.equipment_id} does not exist or does not belong to user")
+
     # Add to existing equipment list
     current_equipment = shop_space['equipment']
     current_equipment.append(placement.to_dict())
-    
+
     # Update database with new equipment list
     equipment_json = json.dumps(current_equipment)
-    
+
     with _connect_shop_spaces() as conn:
         cursor = conn.execute(
             "UPDATE shop_spaces SET equipment = ? WHERE shop_id = ?",
