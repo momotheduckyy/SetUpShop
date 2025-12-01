@@ -137,3 +137,23 @@ def get_user_maintenance_summary(user_id):
         return jsonify({"summary": summary}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@equipment_bp.route('/maintenance-schedule/<int:user_id>', methods=['GET'])
+def get_maintenance_schedule_route(user_id):
+    """Get maintenance schedule with shop locations"""
+    try:
+        from equipment_library_db import get_maintenance_schedule_with_shops
+        schedule = get_maintenance_schedule_with_shops(user_id)
+        return jsonify(schedule), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@equipment_bp.route('/maintenance/complete/<int:equipment_id>', methods=['POST'])
+def complete_maintenance(equipment_id):
+    """Mark maintenance complete"""
+    try:
+        from equipment_library_db import perform_maintenance
+        updated = perform_maintenance(equipment_id)
+        return jsonify(updated), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
