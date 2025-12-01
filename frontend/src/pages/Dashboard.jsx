@@ -52,7 +52,9 @@ function Dashboard({ user, setUser }) {
           <div className="dashboard-card">
             <h3>Maintenance</h3>
             <p>Track equipment maintenance schedules</p>
-            <button className="card-btn">View Maintenance</button>
+            <button className="card-btn" onClick={() => navigate('/maintenance')}>
+              View Maintenance
+            </button>
           </div>
         </div>
       </main>
