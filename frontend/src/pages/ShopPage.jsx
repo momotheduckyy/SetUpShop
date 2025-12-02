@@ -8,6 +8,7 @@ import { equipmentCatalog } from "../lib/data/equipmentCatalog";
 import ShopCanvas from "../components/ShopCanvas";
 import ShopSidebar from "../components/ShopSidebar";
 import { addEquipmentToShop } from "../services/api";
+import { addEquipmentToUser } from "../services/api";
 import "../styles/ShopPage.css";
 
 const API_BASE = "http://localhost:5001/api";
@@ -187,6 +188,15 @@ async function handleDropEquipment(eqConfig, x, y) {
       y,
       z: 0,
     });
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (user && user.id) {
+      await addEquipmentToUser(user.id, {
+        equipment_type_id: eqConfig.id,
+        notes: "",
+        purchase_date: new Date().toISOString().split("T")[0],
+      });
+    }
   } catch (err) {
     console.error("Failed to save placement:", err);
     // optional: rollback or show a toast
