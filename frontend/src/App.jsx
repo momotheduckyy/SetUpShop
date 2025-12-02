@@ -41,7 +41,7 @@ function App() {
           {/* 🔑 Single shop editor */}
           <Route
             path="/shops/:shopId"
-            element={user ? <ShopPage /> : <Navigate to="/login" />}
+            element={user ? <ShopPage user={user} /> : <Navigate to="/login" />}
           />
 
           {/* Equipment catalog */}

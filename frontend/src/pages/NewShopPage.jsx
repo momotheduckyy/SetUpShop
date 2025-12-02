@@ -15,8 +15,8 @@ export default function NewShopPage({ user }) {
 
   const [newShopForm, setNewShopForm] = useState({
     name: "",
-    length: 40,
-    width: 30,
+    length: 10,
+    width: 10,
     height: 10,
   });
 

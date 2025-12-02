@@ -25,9 +25,9 @@ export class Shop {
       color: config.color,
       x,
       y,
-      rotationDeg: 0,
+      rotationDeg: config.rotationDeg || 0,
 
-      // 🔑 Keep a reference to backend equipment id if present
+      // keep reference to backend id if present
       equipmentDbId: config.equipment_id || config.id || null,
       manufacturer: config.manufacturer,
       model: config.model,
@@ -36,13 +36,24 @@ export class Shop {
     });
 
     this.equipment_list.push(equipment);
-    return equipment; // 👈 useful when we want the instance back
+    return equipment;
   }
 
   rotateEquipment(id, deltaDeg) {
     const eq = this.getEquipmentById(id);
     if (!eq) return;
     eq.rotate(deltaDeg);
+  }
+
+  moveEquipment(id, newX, newY) {
+    const eq = this.getEquipmentById(id);
+    if (!eq) return;
+    eq.x = newX;
+    eq.y = newY;
+  }
+
+  removeEquipmentById(id) {
+    this.equipment_list = this.equipment_list.filter((eq) => eq.id !== id);
   }
 
   getEquipmentById(id) {

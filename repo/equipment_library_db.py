@@ -111,11 +111,12 @@ def add_equipment_to_user(user_id, equipment_type_id, notes=None, purchase_date=
         user_equipment_id = cursor.lastrowid
         return get_user_equipment_by_id(user_equipment_id)
 
-#idemtify ewuipment instance with type details
+#identify equipment instance with type details
 def get_user_equipment_by_id(user_equipment_id):
     with _connect() as conn:
         cursor = conn.execute(
-            """SELECT ue.*, et.equipment_name, et.description, et.width, et.height, et.depth, et.maintenance_interval_days
+            """SELECT ue.*, et.equipment_name, et.description, et.width, et.height, et.depth,
+                      et.maintenance_interval_days, et.color, et.manufacturer, et.model
                FROM user_equipment ue
                JOIN equipment_types et ON ue.equipment_type_id = et.id
                WHERE ue.id = ?""",
@@ -125,13 +126,14 @@ def get_user_equipment_by_id(user_equipment_id):
         return _row_to_dict(equipment)
 
 def get_equipment_by_user(user_id):
-    """Get all equipment owned by a specific user"""
+    """Get all equipment owned by a specific user with full type details"""
     with _connect() as conn:
         cursor = conn.execute(
-            """SELECT ue.*, et.equipment_name, et.description, et.width, et.height, et.depth, et.maintenance_interval_days
+            """SELECT ue.*, et.equipment_name, et.description, et.width, et.height, et.depth,
+                      et.maintenance_interval_days, et.color, et.manufacturer, et.model
                FROM user_equipment ue
                JOIN equipment_types et ON ue.equipment_type_id = et.id
-               WHERE ue.user_id = ? 
+               WHERE ue.user_id = ?
                ORDER BY ue.date_purchased DESC""",
             (user_id,)
         )
