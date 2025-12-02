@@ -1,7 +1,6 @@
 .shop-layout-container {
   display: flex;
   height: 100vh;
-  position: relative;
 }
 
 /* Back button styling - top left on main workspace area */
@@ -34,11 +33,9 @@
 .shop-sidebar {
   width: 260px;
   background: #f5f5f5;
-  padding: 1rem;
   border-right: 2px solid #ddd;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .shop-header h3 {
@@ -64,13 +61,10 @@
 }
 
 .shop-workspace {
-  flex-grow: 1;
+  flex: 1;
   position: relative;
+  overflow: hidden;
   background: #e5e5e5;
-  overflow: auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .zoom-controls h4 {
