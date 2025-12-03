@@ -6,16 +6,11 @@ export default function EquipmentDetailsPanel({
   equipment,
   onClose,
   onDelete,
-  onRotate,
 }) {
   if (!equipment) return null;
 
   const handleDeleteClick = () => {
     onDelete?.(equipment);
-  };
-
-  const handleRotate = (delta) => {
-    onRotate?.(delta);
   };
 
   return (
@@ -53,25 +48,6 @@ export default function EquipmentDetailsPanel({
             <strong>Notes:</strong> {equipment.maintenanceNotes}
           </p>
         )}
-
-        {/* 🔁 Rotation controls */}
-        <div className="equipment-panel-rotation">
-          <span>Rotation:</span>
-          <button
-            type="button"
-            className="equipment-panel-rotate-btn"
-            onClick={() => handleRotate(-15)}
-          >
-            −15°
-          </button>
-          <button
-            type="button"
-            className="equipment-panel-rotate-btn"
-            onClick={() => handleRotate(15)}
-          >
-            +15°
-          </button>
-        </div>
       </div>
 
       <div className="equipment-panel-footer">

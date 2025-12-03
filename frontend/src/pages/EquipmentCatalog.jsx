@@ -27,12 +27,6 @@ export default function EquipmentCatalog() {
   if (loading) {
     return (
       <div className="eqp-container">
-        <button
-          className="back-btn"
-          onClick={() => navigate('/dashboard')}
-        >
-          ← Back to Dashboard
-        </button>
         <h2>Equipment Catalog</h2>
         <p>Loading…</p>
       </div>
@@ -42,12 +36,6 @@ export default function EquipmentCatalog() {
   if (err) {
     return (
       <div className="eqp-container">
-        <button
-          className="back-btn"
-          onClick={() => navigate('/dashboard')}
-        >
-          ← Back to Dashboard
-        </button>
         <h2>Equipment Catalog</h2>
         <p className="eqp-muted">Error: {err}</p>
       </div>
@@ -56,12 +44,6 @@ export default function EquipmentCatalog() {
 
   return (
     <div className="eqp-container">
-      <button
-        className="back-btn"
-        onClick={() => navigate('/dashboard')}
-      >
-        ← Back to Dashboard
-      </button>
       <h2>Equipment Catalog</h2>
 
       <div className="eqp-grid">

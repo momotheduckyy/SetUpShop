@@ -6,7 +6,7 @@ import axios from "axios";
 import { Shop } from "../lib/models/Shop";
 import ShopCanvas from "../components/ShopCanvas";
 import ShopSidebar from "../components/ShopSidebar";
-import { addEquipmentToShop, getUserEquipment } from "../services/api";
+import { addEquipmentToShop, getUserEquipment, getEquipmentCatalog, deleteEquipment } from "../services/api";
 import { addEquipmentToUser } from "../services/api";
 import "../styles/ShopPage.css";
 import EquipmentDetailsPanel from "../components/EquipmentDetailsPanel";
@@ -21,6 +21,7 @@ export default function ShopPage({ user }) {
 
   const [shop, setShop] = useState(null);
   const [userEquipment, setUserEquipment] = useState([]);
+  const [equipmentCatalog, setEquipmentCatalog] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [renderTick, setRenderTick] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -75,7 +76,8 @@ export default function ShopPage({ user }) {
           height = data.height ?? 10;
         }
 
-        const shopInstance = new Shop(name, length, width, 10);
+        // Shop constructor: (name, widthFt, depthFt, scale)
+        const shopInstance = new Shop(name, width, length, 10);
 
 // Load equipment placements from shop
         // Note: This runs before userEquipment is loaded, so we'll store placements
@@ -109,7 +111,35 @@ export default function ShopPage({ user }) {
     }
     fetchShop();
   }, [shopId]);
-  // Fetch user's equipment for the sidebar
+  // Fetch equipment catalog for the sidebar
+  useEffect(() => {
+    async function fetchEquipmentCatalog() {
+      try {
+        const response = await getEquipmentCatalog();
+        const equipment = response.equipment || [];
+
+        // Transform equipment catalog to match canvas format
+        const transformedEquipment = equipment.map(eq => ({
+          id: eq.id,  // equipment_types.id
+          name: eq.equipment_name,
+          widthFt: eq.width / 12,  // Convert mm to feet (assuming width is in inches, convert to feet)
+          depthFt: eq.depth / 12,
+          color: eq.color || '#aaa',
+          manufacturer: eq.manufacturer || '',
+          model: eq.model || '',
+          maintenanceIntervalDays: eq.maintenance_interval_days
+        }));
+
+        setEquipmentCatalog(transformedEquipment);
+      } catch (err) {
+        console.error("Failed to load equipment catalog:", err);
+      }
+    }
+
+    fetchEquipmentCatalog();
+  }, []);
+
+  // Fetch user's equipment for placing on canvas
   useEffect(() => {
     async function fetchUserEquipment() {
       if (!user || !user.id) return;
@@ -121,8 +151,8 @@ export default function ShopPage({ user }) {
         const transformedEquipment = equipment.map(eq => ({
           id: eq.id,  // user_equipment.id
           name: eq.equipment_name,
-          widthFt: eq.width,
-          depthFt: eq.depth,
+          widthFt: eq.width / 12,  // Convert inches to feet
+          depthFt: eq.depth / 12,   // Convert inches to feet
           color: eq.color || '#aaa',
           manufacturer: eq.manufacturer || '',
           model: eq.model || '',
@@ -141,7 +171,8 @@ export default function ShopPage({ user }) {
 
   // Apply pending equipment placements once both shop and userEquipment are loaded
   useEffect(() => {
-    if (!shop || !shop._pendingPlacements || userEquipment.length === 0) return;
+    if (!shop || !shop._pendingPlacements) return;
+    if (userEquipment.length === 0) return;
 
     const placements = shop._pendingPlacements;
     shop._pendingPlacements = null; // Clear to avoid re-applying
@@ -156,8 +187,9 @@ export default function ShopPage({ user }) {
       }
 
       // Add equipment to shop with saved position
+      // Make sure to pass equipment_id so equipmentDbId gets set correctly
       shop.addEquipment(
-        userEq,
+        { ...userEq, equipment_id: placement.equipment_id },
         placement.x_coordinate,
         placement.y_coordinate
       );
@@ -205,30 +237,46 @@ export default function ShopPage({ user }) {
 async function handleDropEquipment(eqConfig, x, y) {
   if (!shop) return;
 
-  // 1) Local, optimistic update
-  const placed = shop.addEquipment(eqConfig, x, y);
-  console.log("Locally placed equipment:", placed);
-  console.log("Equipment count in shop:", shop.equipment_list.length);
-
-  setRenderTick((t) => t + 1);
-
-  // 2) Persist to backend
+  // 1) Persist to backend first - add equipment to user inventory
   try {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user || !user.id) {
+      console.error("No user logged in");
+      return;
+    }
+
+    // First, add equipment to user's inventory
+    const userEquipmentResponse = await addEquipmentToUser(user.id, {
+      equipment_type_id: eqConfig.id, // equipment_types.id
+      notes: "",
+      purchase_date: new Date().toISOString().split("T")[0],
+    });
+
+    // Get the newly created user_equipment.id
+    const userEquipmentId = userEquipmentResponse.equipment?.id;
+
+    if (!userEquipmentId) {
+      console.error("Failed to get user equipment ID");
+      return;
+    }
+
+    // Now add to shop using the user_equipment.id
     await addEquipmentToShop(shopId, {
-      equipmentId: eqConfig.id, // user_equipment.id
+      equipmentId: userEquipmentId,
       x,
       y,
       z: 0,
     });
-    const user = JSON.parse(localStorage.getItem("user"));
 
-    if (user && user.id) {
-      await addEquipmentToUser(user.id, {
-        equipment_type_id: eqConfig.id,
-        notes: "",
-        purchase_date: new Date().toISOString().split("T")[0],
-      });
-    }
+    // Update local state with the new user_equipment.id
+    // Pass as equipment_id so Shop model stores it in equipmentDbId
+    const placedEquipment = { ...eqConfig, equipment_id: userEquipmentId };
+    shop.addEquipment(placedEquipment, x, y);
+    console.log("Locally placed equipment with DB ID:", userEquipmentId);
+    console.log("Equipment count in shop:", shop.equipment_list.length);
+
+    setRenderTick((t) => t + 1);
   } catch (err) {
     console.error("Failed to save placement:", err);
   }
@@ -249,18 +297,35 @@ function handleSelectEquipment(id) {
 async function handleDeleteEquipment(equipment) {
   if (!shop || !equipment) return;
 
-  // 1. Remove from in-memory model
-  shop.removeEquipmentById(equipment.id);
-  setSelectedId(null);
-  setRenderTick((t) => t + 1);
-  setIsDetailsOpen(false);
+  // Confirm deletion
+  const confirmDelete = window.confirm(
+    `Are you sure you want to delete ${equipment.name}? This will remove it from your equipment inventory permanently.`
+  );
 
-  if (equipment.equipmentDbId) {
-    try {
+  if (!confirmDelete) return;
+
+  try {
+    // 1. Remove from in-memory model first (optimistic update)
+    shop.removeEquipmentById(equipment.id);
+    setSelectedId(null);
+    setRenderTick((t) => t + 1);
+    setIsDetailsOpen(false);
+
+    if (equipment.equipmentDbId) {
+      // 2. Remove from shop space equipment column
       await removeEquipmentFromShop(shopId, equipment.equipmentDbId);
-    } catch (err) {
-      console.error("Failed to delete equipment from backend:", err);
+
+      // 3. Delete from user_equipment table
+      await deleteEquipment(equipment.equipmentDbId);
+
+      console.log(`Successfully deleted equipment ${equipment.equipmentDbId} from shop and user inventory`);
     }
+  } catch (err) {
+    console.error("Failed to delete equipment:", err);
+    alert("Failed to delete equipment. Please try again.");
+
+    // Refresh the page to restore the correct state
+    window.location.reload();
   }
 }
 
@@ -280,11 +345,25 @@ async function handleSaveAndReturn() {
   setSaveError("");
   setSaveSuccess(false);
   try {
+    // Gather all equipment positions from the shop
+    // Use equipmentDbId (the actual user_equipment.id) not the local canvas id
+    const equipment_positions = shop.equipment_list
+      .filter(eq => eq.equipmentDbId) // Only include equipment that has a DB ID
+      .map(eq => ({
+        equipment_id: eq.equipmentDbId,
+        x: eq.x,
+        y: eq.y,
+        z: eq.z || 0
+      }));
+
     const payload = {
+      shop_name: shopForm.name,
       length: shopForm.length,
       width: shopForm.width,
       height: shopForm.height,
+      equipment_positions: equipment_positions
     };
+
     const res = await axios.put(`${API_BASE}/shops/${shopId}`, payload);
     const updated = res.data.shop;
 
@@ -304,7 +383,8 @@ async function handleSaveAndReturn() {
 
   } catch (err) {
     console.error("Failed to save shop:", err);
-    setSaveError("Failed to save shop.");
+    console.error("Error details:", err.response?.data);
+    setSaveError(err.response?.data?.error || "Failed to save shop.");
   } finally {
     setIsSaving(false);
   }
@@ -345,7 +425,7 @@ async function handleSaveAndReturn() {
       <ShopSidebar
         shop={shop}
         shopId={shopId}
-        equipmentCatalog={userEquipment}
+        equipmentCatalog={equipmentCatalog}
         onDragStart={handleDragStart}
         selectedEq={selectedEq}
         rotateSelected={rotateSelected}
@@ -379,7 +459,6 @@ async function handleSaveAndReturn() {
             setSelectedId(null);
           }}
           onDelete={handleDeleteEquipment}
-          onRotate={(delta) => rotateSelected(delta)}
         />
       )}
 

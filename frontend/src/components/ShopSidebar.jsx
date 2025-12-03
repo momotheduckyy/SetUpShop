@@ -4,16 +4,14 @@ import React from "react";
 import ShopForm from "./ShopForm";
 import SaveButton from "./SaveButton";
 import "../styles/ShopSidebar.css";
-import { equipmentCatalog } from "../lib/data/equipmentCatalog";
 
 export default function ShopSidebar({
   shop,
   shopId,
+  equipmentCatalog,
   onDragStart,
   selectedEq,
   rotateSelected,
-  isEditing,
-  toggleEditing,
   shopForm,
   onShopFormChange,
   onSaveAndReturn,
@@ -23,39 +21,37 @@ export default function ShopSidebar({
 }) {
   return (
     <aside className="shop-sidebar">
-      {/* Header + Edit toggle + form */}
+      {/* Header + form (always editable) */}
       <div className="shop-header">
         {shopForm && (
           <ShopForm
             newShopForm={shopForm}
             onChange={onShopFormChange}
-            isEditing={isEditing}
+            isEditing={true}
             shopId={shopId}
           />
         )}
-
-        <button
-          type="button"
-          className={`shop-edit-btn ${isEditing ? "editing" : ""}`}
-          onClick={toggleEditing}
-        >
-          {isEditing ? "Done" : "Edit"}
-        </button>
       </div>
 
       {/* Equipment list for drag/drop */}
       <div className="sidebar-section">
         <h4>Equipment</h4>
-        {equipmentCatalog.map((eq) => (
-          <div
-            key={eq.name}
-            className="equipment-tile"
-            draggable
-            onDragStart={(e) => onDragStart(e, eq)}
-          >
-            {eq.name}
-          </div>
-        ))}
+        {equipmentCatalog && equipmentCatalog.length > 0 ? (
+          equipmentCatalog.map((eq) => (
+            <div
+              key={eq.id}
+              className="equipment-tile"
+              draggable
+              onDragStart={(e) => onDragStart(e, eq)}
+            >
+              {eq.name}
+            </div>
+          ))
+        ) : (
+          <p style={{ fontSize: '0.875rem', color: '#6e6e73', padding: '0.5rem 0' }}>
+            No equipment available
+          </p>
+        )}
       </div>
 
 

@@ -1,65 +1,100 @@
 .eqp-container {
-  padding: 40px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-}
-
-/* Back button styling - fully top left */
-.eqp-container .back-btn {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background: #4a90e2;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.3s ease;
-  z-index: 10;
-}
-
-.eqp-container .back-btn:hover {
-  background: #357abd;
 }
 
 .eqp-container h2 {
-  font-size: 32px;
-  color: #333;
-  margin-bottom: 24px;
-  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.015em;
+}
+
+.eqp-container > p {
+  color: #6e6e73;
+  font-size: 1.125rem;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
 }
 
 .eqp-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
   width: 100%;
+  margin-top: 1rem;
 }
 
 .eqp-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.eqp-card:hover {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 .eqp-card h3 {
-  font-size: 22px;
-  color: #333;
-  margin-bottom: 8px;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.015em;
 }
 
 .eqp-card p {
-  color: #555;
-  margin: 6px 0;
+  color: #6e6e73;
+  margin: 0.5rem 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
 }
 
 .eqp-muted {
-  color: #777;
-  font-size: 14px;
+  color: #86868b;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+}
+
+/* Table styling for My Equipment */
+.eqp-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.eqp-table thead {
+  background: #fafafa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.eqp-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #1d1d1f;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+}
+
+.eqp-table td {
+  padding: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  color: #6e6e73;
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+}
+
+.eqp-table tbody tr:hover {
+  background: #fafafa;
 }

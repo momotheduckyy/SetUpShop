@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #daa845;
+  background: #fafafa;
 }
 
 /* Form card */
@@ -12,19 +12,37 @@
   width: 560px;
   max-width: 90%;
   background: #ffffff;
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  padding: 3rem;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
 }
 
 .shop-form-submit-btn {
-  padding: 0.5rem;
+  padding: 0.875rem;
   width: 100%;
-  background: #4caf50;
-  color: white;
+  background: #1d1d1f;
+  color: #ffffff;
   border: none;
-  border-radius: 4px;
+  border-radius: 10px;
   cursor: pointer;
-  margin-top: 0.5rem;
-  font-size: 1.5rem;
+  margin-top: 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shop-form-submit-btn:hover:not(:disabled) {
+  background: #424245;
+  transform: translateY(-1px);
+}
+
+.shop-form-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.shop-form-submit-btn:disabled {
+  background: #d2d2d7;
+  cursor: not-allowed;
 }

@@ -59,9 +59,6 @@ function MyEquipment({ user }) {
   if (loading) {
     return (
       <div className="eqp-container">
-        <button className="back-btn" onClick={() => navigate("/dashboard")}>
-          ← Back to Dashboard
-        </button>
         <h2>My Equipment</h2>
         <p className="eqp-muted">Loading your equipment…</p>
       </div>
@@ -71,9 +68,6 @@ function MyEquipment({ user }) {
   if (error) {
     return (
       <div className="eqp-container">
-        <button className="back-btn" onClick={() => navigate("/dashboard")}>
-          ← Back to Dashboard
-        </button>
         <h2>My Equipment</h2>
         <p className="eqp-muted">Error: {error}</p>
       </div>
@@ -84,9 +78,6 @@ function MyEquipment({ user }) {
   if (equipment.length === 0) {
     return (
       <div className="eqp-container">
-        <button className="back-btn" onClick={() => navigate("/dashboard")}>
-          ← Back to Dashboard
-        </button>
         <h2>My Equipment</h2>
         <p className="eqp-muted">
           View all equipment you own and which shop space it belongs to.
@@ -100,10 +91,6 @@ function MyEquipment({ user }) {
 
   return (
     <div className="eqp-container">
-      <button className="back-btn" onClick={() => navigate("/dashboard")}>
-        ← Back to Dashboard
-      </button>
-
       <h2>My Equipment</h2>
       <p className="eqp-muted">
         View all equipment you own and which shop space it belongs to.

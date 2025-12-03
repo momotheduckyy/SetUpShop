@@ -108,12 +108,92 @@ export default function ShopCanvas({
       ctx.lineWidth = isSelected ? 3 / scale : 1 / scale;
       ctx.strokeRect(-w / 2, -h / 2, w, h);
 
-      ctx.fillStyle = "#000";
-      ctx.font = `${16 / scale}px sans-serif`;
+      // Calculate appropriate font size based on equipment dimensions
+      let fontSize = Math.min(w / 6, h / 3, 2); // Dynamic font size in feet
+      ctx.font = `bold ${fontSize}px sans-serif`;
       ctx.textBaseline = "middle";
       ctx.textAlign = "center";
-      ctx.fillText(eq.name, 0,0);
 
+      // Measure and fit text to box width
+      const maxWidth = w * 0.9; // Use 90% of equipment width
+      let displayText = eq.name;
+      let textWidth = ctx.measureText(displayText).width;
+
+      // If text is too wide, reduce font size first, then truncate if needed
+      while (textWidth > maxWidth && fontSize > 0.5) {
+        fontSize *= 0.9;
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        textWidth = ctx.measureText(displayText).width;
+      }
+
+      // If still too wide after font reduction, truncate with ellipsis
+      if (textWidth > maxWidth) {
+        while (textWidth > maxWidth && displayText.length > 3) {
+          displayText = displayText.slice(0, -1);
+          textWidth = ctx.measureText(displayText + '...').width;
+        }
+        displayText += '...';
+      }
+
+      // Draw text in dark color
+      ctx.fillStyle = "#1d1d1f";
+      ctx.fillText(displayText, 0, 0);
+
+      ctx.restore();
+    }
+
+    ctx.restore();
+
+    // --- Rulers/Measurement Lines ---
+    ctx.save();
+    ctx.fillStyle = "#1d1d1f";
+    ctx.strokeStyle = "#1d1d1f";
+    ctx.font = "12px sans-serif";
+    ctx.lineWidth = 1;
+
+    // Bottom ruler (width)
+    const rulerBottomY = offsetY + drawnHeight + 20;
+    ctx.beginPath();
+    ctx.moveTo(offsetX, rulerBottomY);
+    ctx.lineTo(offsetX + drawnWidth, rulerBottomY);
+    ctx.stroke();
+
+    // Tick marks for bottom ruler - every 5 feet
+    for (let i = 0; i <= shopWidth; i += 5) {
+      const x = offsetX + (i * scale);
+      ctx.beginPath();
+      ctx.moveTo(x, rulerBottomY - 5);
+      ctx.lineTo(x, rulerBottomY + 5);
+      ctx.stroke();
+
+      // Labels
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(`${i}ft`, x, rulerBottomY + 8);
+    }
+
+    // Right ruler (depth/length)
+    const rulerRightX = offsetX + drawnWidth + 20;
+    ctx.beginPath();
+    ctx.moveTo(rulerRightX, offsetY);
+    ctx.lineTo(rulerRightX, offsetY + drawnHeight);
+    ctx.stroke();
+
+    // Tick marks for right ruler - every 5 feet
+    for (let i = 0; i <= shopDepth; i += 5) {
+      const y = offsetY + (i * scale);
+      ctx.beginPath();
+      ctx.moveTo(rulerRightX - 5, y);
+      ctx.lineTo(rulerRightX + 5, y);
+      ctx.stroke();
+
+      // Labels (rotated)
+      ctx.save();
+      ctx.translate(rulerRightX + 8, y);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(`${i}ft`, 0, 0);
       ctx.restore();
     }
 

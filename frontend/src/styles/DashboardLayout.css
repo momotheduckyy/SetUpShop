@@ -1,0 +1,56 @@
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #fafafa;
+}
+
+.main-content {
+  margin-left: 280px;
+  flex: 1;
+  padding: 3rem 4rem;
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 240px;
+  }
+
+  .main-content {
+    margin-left: 240px;
+    padding: 1.5rem;
+  }
+
+  .sidebar-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .nav-text {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .sidebar {
+    width: 200px;
+  }
+
+  .main-content {
+    margin-left: 200px;
+    padding: 1rem;
+  }
+
+  .sidebar-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .nav-link {
+    padding: 0.75rem 1rem;
+  }
+
+  .nav-icon {
+    font-size: 1.25rem;
+  }
+}
