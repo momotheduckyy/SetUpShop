@@ -246,32 +246,83 @@ def remove_equipment_from_shop_space(shop_id, equipment_id):
             return get_shop_space_by_id(shop_id)
         return None
 
-def update_shop_space_dimensions(shop_id, length=None, width=None, height=None):
+def update_equipment_position(shop_id, equipment_id, x=None, y=None, z=None):
     """
-    Update room dimensions of a shop space
-    
+    Update the position of equipment in a shop space
+
     Args:
         shop_id (str): Shop space identifier
-        length (float, optional): New length dimension
-        width (float, optional): New width dimension
-        height (float, optional): New height dimension
-        
+        equipment_id (int): Equipment ID to update
+        x (float, optional): New x coordinate
+        y (float, optional): New y coordinate
+        z (float, optional): New z coordinate
+
     Returns:
         dict: Updated shop space data or None if failed
     """
     shop_space = get_shop_space_by_id(shop_id)
     if not shop_space:
         raise ValueError(f"Shop space with ID '{shop_id}' does not exist")
-    
-    # Use existing values if new ones not provided
-    new_length = length if length is not None else shop_space['length']
-    new_width = width if width is not None else shop_space['width'] 
-    new_height = height if height is not None else shop_space['height']
-    
+
+    # Find and update the equipment
+    current_equipment = shop_space['equipment']
+    equipment_found = False
+
+    for eq in current_equipment:
+        if eq['equipment_id'] == equipment_id:
+            equipment_found = True
+            if x is not None:
+                eq['x_coordinate'] = x
+            if y is not None:
+                eq['y_coordinate'] = y
+            if z is not None:
+                eq['z_coordinate'] = z
+            break
+
+    if not equipment_found:
+        raise ValueError(f"Equipment with ID {equipment_id} not found in shop")
+
+    # Update database
+    equipment_json = json.dumps(current_equipment)
+
     with _connect_shop_spaces() as conn:
         cursor = conn.execute(
-            "UPDATE shop_spaces SET length = ?, width = ?, height = ? WHERE shop_id = ?",
-            (new_length, new_width, new_height, shop_id)
+            "UPDATE shop_spaces SET equipment = ? WHERE shop_id = ?",
+            (equipment_json, shop_id)
+        )
+        conn.commit()
+        if cursor.rowcount > 0:
+            return get_shop_space_by_id(shop_id)
+        return None
+
+def update_shop_space_dimensions(shop_id, length=None, width=None, height=None, shop_name=None):
+    """
+    Update room dimensions and name of a shop space
+
+    Args:
+        shop_id (str): Shop space identifier
+        length (float, optional): New length dimension
+        width (float, optional): New width dimension
+        height (float, optional): New height dimension
+        shop_name (str, optional): New shop name
+
+    Returns:
+        dict: Updated shop space data or None if failed
+    """
+    shop_space = get_shop_space_by_id(shop_id)
+    if not shop_space:
+        raise ValueError(f"Shop space with ID '{shop_id}' does not exist")
+
+    # Use existing values if new ones not provided
+    new_length = length if length is not None else shop_space['length']
+    new_width = width if width is not None else shop_space['width']
+    new_height = height if height is not None else shop_space['height']
+    new_shop_name = shop_name if shop_name is not None else shop_space['shop_name']
+
+    with _connect_shop_spaces() as conn:
+        cursor = conn.execute(
+            "UPDATE shop_spaces SET shop_name = ?, length = ?, width = ?, height = ? WHERE shop_id = ?",
+            (new_shop_name, new_length, new_width, new_height, shop_id)
         )
         conn.commit()
         if cursor.rowcount > 0:

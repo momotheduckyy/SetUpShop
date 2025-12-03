@@ -1,41 +1,101 @@
 .shop-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 3rem; /* <--- Add vertical spacing */
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  margin-bottom: 1rem;
+}
+
+.sidebar-section h4 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #86868b;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.equipment-tile {
+  padding: 0.875rem 1rem;
+  margin-bottom: 0.5rem;
+  background: #fafafa;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  cursor: grab;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  letter-spacing: -0.01em;
+  transition: all 0.15s ease;
+}
+
+.equipment-tile:hover {
+  background: #f5f5f7;
+  border-color: rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.equipment-tile:active {
+  cursor: grabbing;
+  transform: scale(0.98);
 }
 
 .shop-save-row {
-  margin-top: 0.5rem;
-  margin-bottom: 1rem;
+  margin-top: auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .shop-save-btn {
-  padding: 0.4rem 0.75rem;
-  border-radius: 4px;
+  padding: 0.875rem 1.5rem;
+  border-radius: 10px;
   border: none;
-  background: #4caf50;
-  color: white;
-  font-size: 1.2rem;
+  background: #1d1d1f;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
+  letter-spacing: -0.015em;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
 
+.shop-save-btn:hover:not(:disabled) {
+  background: #424245;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.shop-save-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .shop-save-btn:disabled {
-  opacity: 0.6;
-  cursor: default;
+  background: #d2d2d7;
+  cursor: not-allowed;
 }
 
 .shop-save-status {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  text-align: center;
+  padding: 0.5rem;
 }
 
 .shop-save-status--success {
-  color: #2e7d32;
+  color: #34C759;
 }
 
 .shop-save-status--error {
-  color: #c62828;
+  color: #FF3B30;
 }

@@ -15,6 +15,7 @@ export class Equipment {
     make = "",
     maintenanceIntervalDays = null,
     maintenanceNotes = "",
+    equipmentDbId = null,
   }) {
     this.id = id;
     this.name = name;
@@ -31,6 +32,9 @@ export class Equipment {
     this.make = make;
     this.maintenanceIntervalDays = maintenanceIntervalDays;
     this.maintenanceNotes = maintenanceNotes;
+
+    // Database ID for persistence
+    this.equipmentDbId = equipmentDbId;
   }
 
   rotate(deltaDeg) {
