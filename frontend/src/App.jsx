@@ -1,4 +1,5 @@
 // frontend/src/App.jsx
+import MaintenancePage from './pages/MaintenancePage'
 import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
@@ -61,6 +62,27 @@ function App() {
             path="/shops/:shopId"
             element={user ? <ShopPage user={user} /> : <Navigate to="/login" />}
           />
+
+          {/* Equipment catalog */}
+          <Route
+            path="/equipment-catalog"
+            element={user ? <EquipmentCatalog /> : <Navigate to="/login" />}
+          />
+
+          {/* Maintenance */}
+          <Route
+            path="/maintenance"
+            element={user ? <MaintenancePage user={user} /> : <Navigate to="/login" />}
+          />
+
+
+          {/* My Equipment */}
+          <Route
+            path="/my-equipment"
+            element={user ? <MyEquipment user={user} /> : <Navigate to="/login" />}
+          />
+
+          <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
       </div>
     </Router>
