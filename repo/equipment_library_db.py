@@ -190,18 +190,52 @@ def get_all_user_equipment():
         equipment = cursor.fetchall()
         return [_row_to_dict(item) for item in equipment]
 
+def get_overdue_maintenance(user_id):
+    """Get all equipment with overdue maintenance for a user"""
+    today = date.today()
+    with _connect() as conn:
+        cursor = conn.execute(
+            """SELECT ue.*, et.equipment_name, et.description, et.width, et.height, et.depth,
+                      et.maintenance_interval_days, et.color, et.manufacturer, et.model
+               FROM user_equipment ue
+               JOIN equipment_types et ON ue.equipment_type_id = et.id
+               WHERE ue.user_id = ? AND ue.next_maintenance_date < ?
+               ORDER BY ue.next_maintenance_date ASC""",
+            (user_id, today.isoformat())
+        )
+        equipment = cursor.fetchall()
+        return [_row_to_dict(item) for item in equipment]
+
+def get_maintenance_due(user_id, days_ahead=30):
+    """Get equipment with maintenance due within specified days"""
+    today = date.today()
+    future_date = today + timedelta(days=days_ahead)
+    with _connect() as conn:
+        cursor = conn.execute(
+            """SELECT ue.*, et.equipment_name, et.description, et.width, et.height, et.depth,
+                      et.maintenance_interval_days, et.color, et.manufacturer, et.model
+               FROM user_equipment ue
+               JOIN equipment_types et ON ue.equipment_type_id = et.id
+               WHERE ue.user_id = ?
+                 AND ue.next_maintenance_date >= ?
+                 AND ue.next_maintenance_date <= ?
+               ORDER BY ue.next_maintenance_date ASC""",
+            (user_id, today.isoformat(), future_date.isoformat())
+        )
+        equipment = cursor.fetchall()
+        return [_row_to_dict(item) for item in equipment]
+
 def get_maintenance_summary(user_id):
     """Get maintenance summary for a user"""
-    # TODO: Implement get_overdue_maintenance and get_maintenance_due functions
-    # overdue = len(get_overdue_maintenance(user_id))
-    # due_soon = len(get_maintenance_due(user_id, days_ahead=30))  # Next 30 days
+    overdue = len(get_overdue_maintenance(user_id))
+    due_soon = len(get_maintenance_due(user_id, days_ahead=30))
     total_equipment = len(get_equipment_by_user(user_id))
 
     return {
         "user_id": user_id,
         "total_equipment": total_equipment,
-        "overdue_maintenance": 0,  # Placeholder until function is implemented
-        "due_within_30_days": 0    # Placeholder until function is implemented
+        "overdue_maintenance": overdue,
+        "due_within_30_days": due_soon
     }
 
 # HELPER FUNCTIONS
