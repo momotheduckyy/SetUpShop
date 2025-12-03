@@ -27,7 +27,7 @@ export default function ShopPage({ user }) {
 
   const [shop, setShop] = useState(null);
 
-  // Equipment TYPES from equipment_types (for the sidebar library)
+  // Equipment TYPES from equipment_types (for the sidebar/library)
   const [equipmentTypes, setEquipmentTypes] = useState([]);
 
   const [selectedId, setSelectedId] = useState(null);
@@ -51,7 +51,7 @@ export default function ShopPage({ user }) {
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // ---------------------------
-  // 1) Fetch shop details
+  // 1) Fetch shop details (dimensions + existing placements)
   // ---------------------------
   useEffect(() => {
     async function fetchShop() {
@@ -74,7 +74,7 @@ export default function ShopPage({ user }) {
         const width = data.width ?? 20;
         const height = data.height ?? 10;
 
-        // Note: Shop constructor is (name, widthFt, depthFt, scale)
+        // Shop constructor: (name, widthFt, depthFt, scale)
         const shopInstance = new Shop(name, width, length, 10);
 
         // Stash raw placements from DB so we can hydrate them later
@@ -141,7 +141,7 @@ export default function ShopPage({ user }) {
   }, []);
 
   // ---------------------------
-  // 3) Hydrate any existing placements from DB
+  // 3) Hydrate any existing placements from DB (one-time on load)
   // ---------------------------
   useEffect(() => {
     if (!shop || !shop._pendingPlacements) return;
@@ -169,7 +169,7 @@ export default function ShopPage({ user }) {
             placement.position?.y ??
             0;
 
-          // Lookup full equipment instance (user_equipment + type info)
+          // Lookup full equipment instance (user_equipment joined to type)
           const eqRes = await getEquipmentById(equipmentId);
           const eq = eqRes?.equipment || eqRes;
           if (!eq) {
@@ -177,6 +177,7 @@ export default function ShopPage({ user }) {
             continue;
           }
 
+          // eq comes from user_equipment JOIN equipment_types
           const config = {
             name: eq.equipment_name || "Equipment",
             widthFt: (eq.width ?? 72) / 12,
@@ -186,12 +187,12 @@ export default function ShopPage({ user }) {
             model: eq.model || "",
             maintenanceIntervalDays: eq.maintenance_interval_days,
             maintenanceNotes: eq.description || "",
-            equipmentTypeId: eq.equipment_type_id,
             // This is the *user_equipment* id for this instance
             equipmentDbId: eq.id,
           };
 
-          shop.addEquipment(config, x, y);
+          const rotationDeg = placement.rotationDeg || 0;
+          shop.addEquipment(config, x, y, rotationDeg);
         } catch (err) {
           console.error("Failed to hydrate placement:", placement, err);
         }
@@ -242,100 +243,40 @@ export default function ShopPage({ user }) {
     e.dataTransfer.setData("application/json", JSON.stringify(eq));
   }
 
-  // ---- DROP NEW EQUIPMENT ----
-  async function handleDropEquipment(eqConfig, x, y) {
+  // ---------------------------
+  // DROP NEW EQUIPMENT (frontend-only; no backend yet)
+  // ---------------------------
+  function handleDropEquipment(eqConfig, x, y) {
     if (!shop) return;
 
-    // 0) Optimistic local placement so the user sees it immediately
-    const placed = shop.addEquipment(
+    shop.addEquipment(
       {
-        ...eqConfig,
-        equipmentDbId: null, // will fill after backend call
+        name: eqConfig.name,
+        widthFt: eqConfig.widthFt,
+        depthFt: eqConfig.depthFt,
+        color: eqConfig.color,
+        manufacturer: eqConfig.manufacturer,
+        model: eqConfig.model,
+        maintenanceIntervalDays: eqConfig.maintenanceIntervalDays,
+        maintenanceNotes: eqConfig.maintenanceNotes,
+        // new piece → no DB id yet
+        equipmentDbId: null,
       },
       x,
       y
     );
+
     setRenderTick((t) => t + 1);
-
-    try {
-      // 1) Figure out the current user
-      const storedUser = user || JSON.parse(localStorage.getItem("user"));
-      if (!storedUser || !storedUser.id) {
-        console.error("No logged-in user; skipping backend persistence.");
-        return;
-      }
-
-      // 2) Create user_equipment instance for this tool
-      const userEqRes = await addEquipmentToUser(storedUser.id, {
-        equipment_type_id: eqConfig.equipmentTypeId,
-        notes: "",
-        purchase_date: new Date().toISOString().split("T")[0],
-      });
-
-      const created = userEqRes?.equipment || userEqRes;
-      const userEquipmentId =
-        created?.id ??
-        created?.equipment_id ??
-        created?.userEquipmentId ??
-        null;
-
-      if (!userEquipmentId) {
-        console.error("No id returned from addEquipmentToUser:", created);
-        return;
-      }
-
-      // 3) Save placement in shop_spaces (shop_equipment)
-      await addEquipmentToShop(shopId, {
-        equipmentId: userEquipmentId,
-        x,
-        y,
-        z: 0,
-      });
-
-      // 4) Patch the in-memory equipment object with the DB id
-      placed.equipmentDbId = userEquipmentId;
-
-      console.log("Persisted equipment placement:", {
-        userEquipmentId,
-        x,
-        y,
-      });
-    } catch (err) {
-      console.error("Error saving equipment placement:", err);
-      // UI stays as-is; it just might not persist on reload
-    }
   }
 
-  // ---- MOVE EXISTING EQUIPMENT ----
+  // ---------------------------
+  // MOVE EXISTING EQUIPMENT (frontend-only; backend handled on Save)
+  // ---------------------------
   function handleMoveEquipment(id, newX, newY) {
     if (!shop) return;
 
-    const eq = shop.getEquipmentById(id);
-    if (!eq) return;
-
-    // 1) Local move
     shop.moveEquipment(id, newX, newY);
     setRenderTick((t) => t + 1);
-
-    // 2) Persist move if this piece is linked to DB
-    if (eq.equipmentDbId) {
-      (async () => {
-        try {
-          // Remove old placement
-          await removeEquipmentFromShop(shopId, eq.equipmentDbId);
-
-          // Re-add placement with same instance id at new coords
-          await addEquipmentToShop(shopId, {
-            equipmentId: eq.equipmentDbId,
-            x: newX,
-            y: newY,
-            z: 0,
-          });
-        } catch (err) {
-          console.error("Failed to persist move:", err);
-        }
-      })();
-    }
   }
 
   function handleSelectEquipment(id) {
@@ -343,23 +284,16 @@ export default function ShopPage({ user }) {
     setIsDetailsOpen(id != null);
   }
 
-  // ---- DELETE EQUIPMENT FROM SHOP ----
-  async function handleDeleteEquipment(equipment) {
+  // ---------------------------
+  // DELETE EQUIPMENT FROM SHOP (frontend-only; backend handled on Save)
+  // ---------------------------
+  function handleDeleteEquipment(equipment) {
     if (!shop || !equipment) return;
 
-    // Remove from in-memory model
     shop.removeEquipmentById(equipment.id);
     setSelectedId(null);
     setRenderTick((t) => t + 1);
     setIsDetailsOpen(false);
-
-    if (equipment.equipmentDbId) {
-      try {
-        await removeEquipmentFromShop(shopId, equipment.equipmentDbId);
-      } catch (err) {
-        console.error("Failed to delete equipment from backend:", err);
-      }
-    }
   }
 
   function rotateSelected(delta) {
@@ -371,7 +305,9 @@ export default function ShopPage({ user }) {
   const selectedEq =
     selectedId != null && shop ? shop.getEquipmentById(selectedId) : null;
 
-  // ---- SAVE SHOP DIMENSIONS + RETURN ----
+  // ---------------------------
+  // SAVE SNAPSHOT TO BACKEND + RETURN
+  // ---------------------------
   async function handleSaveAndReturn() {
     if (!shop) return;
 
@@ -380,31 +316,113 @@ export default function ShopPage({ user }) {
     setSaveSuccess(false);
 
     try {
-      const payload = {
+      // 1) Save dimensions
+      const dimPayload = {
         length: shopForm.length,
         width: shopForm.width,
         height: shopForm.height,
       };
 
-      const res = await axios.put(`${API_BASE}/shops/${shopId}`, payload);
-      const updated = res.data.shop;
+      await axios.put(`${API_BASE}/shops/${shopId}`, dimPayload);
 
-      if (updated) {
-        const length = updated.length ?? shopForm.length;
-        const width = updated.width ?? shopForm.width;
-        const height = updated.height ?? shopForm.height;
-
-        shop.widthFt = width;
-        shop.depthFt = length;
-
-        setShopForm({ name: shopForm.name, length, width, height });
-        setRenderTick((t) => t + 1);
+      // 2) Sync equipment snapshot
+      const storedUser = user || JSON.parse(localStorage.getItem("user"));
+      if (!storedUser || !storedUser.id) {
+        throw new Error("No logged-in user; cannot save equipment layout.");
       }
 
+      // 2a) Get the current server-side equipment list so we can clear it
+      const shopRes = await axios.get(`${API_BASE}/shops/${shopId}`);
+      const serverShop = shopRes.data.shop;
+      const existingPlacements = serverShop?.equipment || [];
+
+      // Remove all existing placements for this shop
+      for (const placement of existingPlacements) {
+        const equipmentId = placement.equipment_id;
+        if (!equipmentId) continue;
+        try {
+          await removeEquipmentFromShop(shopId, equipmentId);
+        } catch (err) {
+          console.error(
+            "Failed to remove old placement for equipment",
+            equipmentId,
+            err
+          );
+        }
+      }
+      console.log("SNAPSHOT: equipment_list being saved:", shop.equipment_list);
+
+      // 2b) Add all current frontend equipment as placements
+      for (const eq of shop.equipment_list) {
+        let equipmentDbId = eq.equipmentDbId;
+
+        // If this is a brand new piece (no DB id yet), create user_equipment now
+        if (!equipmentDbId) {
+          // Find matching type in the catalog by name
+          const matchingType = equipmentTypes.find(
+            (t) => t.name === eq.name
+          );
+
+          if (!matchingType) {
+            console.warn(
+              "No matching equipment type found for",
+              eq.name,
+              "- skipping"
+            );
+            continue;
+          }
+
+          const userEqRes = await addEquipmentToUser(storedUser.id, {
+            
+            equipment_type_id: matchingType.equipmentTypeId,
+            notes: "",
+            purchase_date: new Date().toISOString().split("T")[0],
+          });
+          console.log("SNAPSHOT: added placement for", equipmentDbId, "at", eq.x, eq.y);
+
+
+          const created = userEqRes?.equipment || userEqRes;
+          equipmentDbId =
+            created?.id ??
+            created?.equipment_id ??
+            created?.userEquipmentId ??
+            null;
+
+          if (!equipmentDbId) {
+            console.error(
+              "Could not determine equipmentDbId for new equipment",
+              created
+            );
+            continue;
+          }
+
+          // Keep it on the object so subsequent saves know it's persisted
+          eq.equipmentDbId = equipmentDbId;
+        }
+
+        // Now add the placement using the user_equipment.id
+        try {
+          await addEquipmentToShop(shopId, {
+            equipmentId: equipmentDbId,
+            x: eq.x,
+            y: eq.y,
+            z: 0,
+            rotationDeg: eq.rotationDeg ?? 0,
+          });
+        } catch (err) {
+          console.error(
+            "Failed to add placement for equipmentDbId",
+            equipmentDbId,
+            err
+          );
+        }
+      }
+
+      setSaveSuccess(true);
       navigate("/shop-spaces");
     } catch (err) {
       console.error("Failed to save shop:", err);
-      setSaveError("Failed to save shop.");
+      setSaveError(err.message || "Failed to save shop.");
     } finally {
       setIsSaving(false);
     }
@@ -471,8 +489,7 @@ export default function ShopPage({ user }) {
           onSelectEquipment={handleSelectEquipment}
           onDropEquipment={handleDropEquipment}
           onMoveEquipment={handleMoveEquipment}
-          // onRemoveEquipment is currently unused in ShopCanvas, so we
-          // keep deletion via the details panel only.
+          onDeleteEquipment={handleDeleteEquipment}
         />
       </section>
 

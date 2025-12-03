@@ -94,6 +94,7 @@ def add_equipment_to_shop(shop_id):
         x = data.get('x_coordinate')
         y = data.get('y_coordinate')
         z = data.get('z_coordinate', 0.0)
+        rotationDeg = data.get('rotationDeg', 0.0)
 
         # validate
         if equipment_id is None:
@@ -101,14 +102,15 @@ def add_equipment_to_shop(shop_id):
         if x is None or y is None:
             return jsonify({"error": "x_coordinate and y_coordinate are required"}), 400
 
-        # ✅ Build a Position + EquipmentPlacement object
+        # Build Position + EquipmentPlacement with rotation
         position = Position(float(x), float(y), float(z))
         placement = EquipmentPlacement(
             equipment_id=int(equipment_id),
             position=position,
+            rotationDeg=float(rotationDeg)
         )
 
-        # ✅ Call shop_space_functions with the correct signature
+        # Save to DB
         shop = add_equipment_to_shop_space(shop_id, placement)
 
         if shop:
@@ -120,11 +122,12 @@ def add_equipment_to_shop(shop_id):
             return jsonify({"error": "Failed to add equipment"}), 500
 
     except ValueError as e:
-        print("DEBUG add_equipment_to_shop ValueError:", e)
+        print("DEBUG ValueError:", e)
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        print("DEBUG add_equipment_to_shop Exception:", e)
+        print("DEBUG Exception:", e)
         return jsonify({"error": str(e)}), 500
+
 
 
 

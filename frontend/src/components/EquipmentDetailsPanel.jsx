@@ -55,6 +55,7 @@ export default function EquipmentDetailsPanel({
         )}
 
         {/* 🔁 Rotation controls */}
+        {/*
         <div className="equipment-panel-rotation">
           <span>Rotation:</span>
           <button
@@ -72,6 +73,7 @@ export default function EquipmentDetailsPanel({
             +15°
           </button>
         </div>
+        */}
       </div>
 
       <div className="equipment-panel-footer">
