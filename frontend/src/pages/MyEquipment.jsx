@@ -43,16 +43,16 @@ function MyEquipment({ user }) {
     fetchAll();
   }, [user]);
 
-  // Map catalog-type-id → shops containing that type
-  const equipmentTypeToShops = {};
+ // Map user_equipment.id → shops that contain that specific item
+  const userEquipmentIdToShops = {};
   shops.forEach((shop) => {
     const placements = Array.isArray(shop.equipment) ? shop.equipment : [];
     placements.forEach((p) => {
-      const typeId = p.equipment_id; // catalog id
-      if (!equipmentTypeToShops[typeId]) {
-        equipmentTypeToShops[typeId] = [];
+      const userEqId = p.equipment_id; // user_equipment.id
+      if (!userEquipmentIdToShops[userEqId]) {
+        userEquipmentIdToShops[userEqId] = [];
       }
-      equipmentTypeToShops[typeId].push(shop);
+      userEquipmentIdToShops[userEqId].push(shop);
     });
   });
 
@@ -110,7 +110,7 @@ function MyEquipment({ user }) {
           </thead>
           <tbody>
             {equipment.map((eq) => {
-              const shopsForEq = equipmentTypeToShops[eq.equipment_type_id] || [];
+              const shopsForEq = userEquipmentIdToShops[eq.id] || [];
               const shopNames =
                 shopsForEq.length === 0
                   ? "Not placed"
