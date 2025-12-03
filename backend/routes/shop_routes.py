@@ -12,6 +12,7 @@ from shop_space_functions import (
     add_equipment_to_shop_space,
     remove_equipment_from_shop_space,
     update_shop_space_dimensions,
+    update_equipment_position,
     delete_shop_space,
     get_all_shop_spaces,
 )
@@ -146,23 +147,45 @@ def get_user_shops(username):
 
 @shop_bp.route('/<shop_id>', methods=['PUT'])
 def update_shop_dimensions(shop_id):
-    """Update shop space dimensions"""
+    """Update shop space dimensions and equipment positions"""
     try:
         data = request.get_json()
+
+        # Update shop dimensions and name
         shop = update_shop_space_dimensions(
             shop_id,
             length=data.get('length'),
             width=data.get('width'),
-            height=data.get('height')
+            height=data.get('height'),
+            shop_name=data.get('shop_name')
         )
 
-        if shop:
-            return jsonify({
-                "message": "Shop dimensions updated successfully",
-                "shop": shop
-            }), 200
-        else:
+        if not shop:
             return jsonify({"error": "Shop not found"}), 404
+
+        # Update equipment positions if provided
+        equipment_updates = data.get('equipment_positions')
+        if equipment_updates:
+            for eq_update in equipment_updates:
+                equipment_id = eq_update.get('equipment_id')
+                x = eq_update.get('x')
+                y = eq_update.get('y')
+                z = eq_update.get('z', 0)
+
+                if equipment_id is not None:
+                    try:
+                        update_equipment_position(shop_id, equipment_id, x, y, z)
+                    except ValueError as e:
+                        # Log the error but don't fail the entire save
+                        print(f"Warning: Could not update equipment {equipment_id}: {e}")
+
+            # Refetch shop to get updated equipment positions
+            shop = get_shop_space_by_id(shop_id)
+
+        return jsonify({
+            "message": "Shop updated successfully",
+            "shop": shop
+        }), 200
 
     except ValueError as e:
         return jsonify({"error": str(e)}), 400

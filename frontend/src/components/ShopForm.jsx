@@ -5,15 +5,12 @@ import "../styles/ShopForm.css";
 export default function ShopForm({
   newShopForm,
   onChange,
-  isEditing = true,
-  toggleEditing,   // for sidebar integration
-  shopId,
 }) {
   return (
     <div className="shop-form-container">
       <h3 className="shop-form-heading">Shop Details</h3>
 
-      <fieldset disabled={!isEditing} className="shop-form-fieldset">
+      <div className="shop-form-fieldset">
         {/* Shop Name */}
         <div className="shop-form-field">
           <label>Shop Name</label>
@@ -61,13 +58,7 @@ export default function ShopForm({
             />
           </div>
         </div>
-      </fieldset>
-
-      {shopId && (
-        <p className="shop-form-shop-id">
-          Current shop ID: <strong>{shopId}</strong>
-        </p>
-      )}
+      </div>
     </div>
   );
 }
