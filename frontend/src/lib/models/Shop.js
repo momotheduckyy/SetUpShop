@@ -15,29 +15,40 @@ export class Shop {
     return ft * this.scale;
   }
 
-  addEquipment(config, x, y) {
-    const equipment = new Equipment({
-      // local id used only for canvas selection
-      id: this._nextLocalId++,
-      name: config.name,
-      widthFt: config.widthFt,
-      depthFt: config.depthFt,
-      color: config.color,
-      x,
-      y,
-      rotationDeg: config.rotationDeg || 0,
+addEquipment(config, x, y) {
+  const equipment = new Equipment({
+    // local id used only for canvas selection
+    id: this._nextLocalId++,
 
-      // keep reference to backend id if present
-      equipmentDbId: config.equipment_id || config.id || null,
-      manufacturer: config.manufacturer,
-      model: config.model,
-      maintenanceIntervalDays: config.maintenanceIntervalDays,
-      maintenanceNotes: config.maintenanceNotes,
-    });
+    name: config.name,
+    widthFt: config.widthFt,
+    depthFt: config.depthFt,
+    color: config.color ?? "#aaa",
+    x,
+    y,
+    rotationDeg: config.rotationDeg ?? 0,
 
-    this.equipment_list.push(equipment);
-    return equipment;
-  }
+    // Keep reference to backend id (user_equipment.id) if present
+    // Priority:
+    // 1) explicit equipmentDbId
+    // 2) equipment_id from placement JSON
+    // 3) id from userEquipment list (DB id when dragging from sidebar)
+    equipmentDbId:
+      config.equipmentDbId ??
+      config.equipment_id ??
+      config.id ??
+      null,
+
+    manufacturer: config.manufacturer ?? "",
+    model: config.model ?? "",
+    maintenanceIntervalDays: config.maintenanceIntervalDays ?? null,
+    maintenanceNotes: config.maintenanceNotes ?? "",
+  });
+
+  this.equipment_list.push(equipment);
+  return equipment;
+}
+
 
   rotateEquipment(id, deltaDeg) {
     const eq = this.getEquipmentById(id);

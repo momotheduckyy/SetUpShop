@@ -1,0 +1,30 @@
+.equipment-card {
+  background: #ffffff;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.equipment-card:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.equipment-card:active {
+  cursor: grabbing;
+  transform: scale(0.97);
+}
+
+.equipment-card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.equipment-card-brand {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #555;
+}

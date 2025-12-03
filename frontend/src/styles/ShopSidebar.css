@@ -1,9 +1,15 @@
 .shop-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 3rem; /* <--- Add vertical spacing */
+  gap: 0rem; /* <--- Add vertical spacing */
 }
 
+.shop-sidebar-section {
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  margin-top: 1rem;
+}
 .shop-save-row {
   margin-top: 0.5rem;
   margin-bottom: 1rem;

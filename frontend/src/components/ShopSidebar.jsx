@@ -4,69 +4,75 @@ import React from "react";
 import ShopForm from "./ShopForm";
 import SaveButton from "./SaveButton";
 import "../styles/ShopSidebar.css";
-import { equipmentCatalog } from "../lib/data/equipmentCatalog";
+import EquipmentCard from "./EquipmentCard";
+
 
 export default function ShopSidebar({
   shop,
   shopId,
   onDragStart,
-  selectedEq,
-  rotateSelected,
   isEditing,
   toggleEditing,
   shopForm,
+  equipmentCatalog,
   onShopFormChange,
   onSaveAndReturn,
   isSaving,
   saveError,
   saveSuccess,
+  selectedEq,
+  rotateSelected,
 }) {
   return (
     <aside className="shop-sidebar">
-      {/* Header + Edit toggle + form */}
-      <div className="shop-header">
-        {shopForm && (
-          <ShopForm
-            newShopForm={shopForm}
-            onChange={onShopFormChange}
-            isEditing={isEditing}
-            shopId={shopId}
-          />
-        )}
+      {/* Shop details / dimensions */}
+      <section className="shop-sidebar-section">
+        <ShopForm
+          newShopForm={shopForm}
+          onChange={onShopFormChange}
+          isEditing={isEditing}
+          toggleEditing={toggleEditing}
+          shopId={shopId}
+        />
+      </section>
 
-        <button
-          type="button"
-          className={`shop-edit-btn ${isEditing ? "editing" : ""}`}
-          onClick={toggleEditing}
-        >
-          {isEditing ? "Done" : "Edit"}
-        </button>
-      </div>
+      <button 
+      type="button"
+      className={`shop-edit-btn ${isEditing ? "editing" : ""}`} 
+      onClick={toggleEditing}>
+      {isEditing ? "Done" : "Edit "}
+      </button>
 
-      {/* Equipment list for drag/drop */}
-      <div className="sidebar-section">
-        <h4>Equipment</h4>
-        {equipmentCatalog.map((eq) => (
-          <div
-            key={eq.name}
-            className="equipment-tile"
-            draggable
-            onDragStart={(e) => onDragStart(e, eq)}
-          >
-            {eq.name}
-          </div>
-        ))}
-      </div>
+      <section className="shop-sidebar-section">
+      <h3 className="shop-sidebar-title">Equipment Library</h3>
+      <p className="shop-sidebar-subtitle">
+        Drag a tool into the workspace to add it to your shop.
+      </p>
+
+      {(!equipmentCatalog || equipmentCatalog.length === 0) && (
+        <p className="shop-sidebar-empty">No equipment types found.</p>
+      )}
+
+      {equipmentCatalog && equipmentCatalog.length > 0 && (
+        <ul className="shop-sidebar-equipment-list">
+          {equipmentCatalog.map((eq) => (
+            <li key={eq.equipmentTypeId}>
+              <EquipmentCard equipment={eq} onDragStart={onDragStart} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
 
 
-      {/* Save & Return */}
+      {/* Save row */}
       <div className="shop-save-row">
         <SaveButton
           onClick={onSaveAndReturn}
           isSaving={isSaving}
-          label="Save & Return"
+          disabled={false}
+          label="Save and Return"
         />
-
         {saveError && (
           <span className="shop-save-status shop-save-status--error">
             {saveError}
