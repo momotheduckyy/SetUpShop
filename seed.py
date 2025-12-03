@@ -15,6 +15,7 @@ from equipment_library_db import (
     get_equipment_catalog, get_equipment_by_user
 )
 from shop_space_functions import create_shop_space, add_equipment_to_shop_space
+from models.placement import Position, EquipmentPlacement
 
 
 def seed_database():
@@ -34,11 +35,15 @@ def seed_database():
     ]
     
     # Add equipment types if catalog is empty
+    # Dimensions are in inches (width, height, depth)
     if not get_equipment_catalog():
-        add_equipment_type("Industrial Oven", "High-temperature oven", 200, 150, 120, 3650)
-        add_equipment_type("Lathe", "Precision metal lathe", 180, 100, 80, 7)
-        add_equipment_type("Drill Press", "Variable speed drill press", 60, 120, 40, 30)
-        add_equipment_type("Welding Machine", "MIG welding machine", 100, 80, 60, 365)
+        add_equipment_type("Table Saw", "Professional table saw", 36, 36, 36, 90, "#f99", "DeWalt", "DW745")
+        add_equipment_type("Band Saw", "14-inch band saw", 24, 48, 24, 180, "#9f9", "Grizzly", "G0555")
+        add_equipment_type("Jointer", "8-inch jointer", 72, 36, 24, 120, "#99f", "Jet", "JJ-8")
+        add_equipment_type("Planer", "13-inch thickness planer", 36, 24, 24, 60, "#ff9", "DeWalt", "DW735")
+        add_equipment_type("Air Compressor", "60-gallon air compressor", 120, 60, 80, 365, "#aaa", "Quincy", "QT-54")
+        add_equipment_type("Milling Machine", "Vertical milling machine", 200, 72, 150, 90, "#aaa", "Bridgeport", "Series I")
+        add_equipment_type("Grinder", "8-inch bench grinder", 50, 12, 40, 180, "#aaa", "Baldor", "8120W")
     
     # Add equipment to users
     today = date.today()
@@ -64,15 +69,24 @@ def seed_database():
     shop2 = create_shop_space("mjones", "MainFacility", 800.0, 600.0, 350.0)
     shop3 = create_shop_space("bwilson", "FabShop", 700.0, 500.0, 320.0)
     
-    # Add equipment to shops
-    add_equipment_to_shop_space(shop1['shop_id'], eq1['id'], 50.0, 50.0, 0.0)
-    add_equipment_to_shop_space(shop1['shop_id'], eq2['id'], 250.0, 50.0, 0.0)
-    
-    add_equipment_to_shop_space(shop2['shop_id'], eq3['id'], 100.0, 100.0, 0.0)
-    add_equipment_to_shop_space(shop2['shop_id'], eq4['id'], 400.0, 150.0, 0.0)
-    
-    add_equipment_to_shop_space(shop3['shop_id'], eq5['id'], 150.0, 100.0, 0.0)
-    add_equipment_to_shop_space(shop3['shop_id'], eq6['id'], 350.0, 150.0, 0.0)
+    # Add equipment to shops using EquipmentPlacement objects
+    placement1 = EquipmentPlacement(eq1['id'], Position(50.0, 50.0, 0.0))
+    add_equipment_to_shop_space(shop1['shop_id'], placement1)
+
+    placement2 = EquipmentPlacement(eq2['id'], Position(250.0, 50.0, 0.0))
+    add_equipment_to_shop_space(shop1['shop_id'], placement2)
+
+    placement3 = EquipmentPlacement(eq3['id'], Position(100.0, 100.0, 0.0))
+    add_equipment_to_shop_space(shop2['shop_id'], placement3)
+
+    placement4 = EquipmentPlacement(eq4['id'], Position(400.0, 150.0, 0.0))
+    add_equipment_to_shop_space(shop2['shop_id'], placement4)
+
+    placement5 = EquipmentPlacement(eq5['id'], Position(150.0, 100.0, 0.0))
+    add_equipment_to_shop_space(shop3['shop_id'], placement5)
+
+    placement6 = EquipmentPlacement(eq6['id'], Position(350.0, 150.0, 0.0))
+    add_equipment_to_shop_space(shop3['shop_id'], placement6)
     
     print("Database seeded successfully!")
 
