@@ -190,40 +190,88 @@ def get_all_user_equipment():
         equipment = cursor.fetchall()
         return [_row_to_dict(item) for item in equipment]
 
+def get_overdue_maintenance(user_id):
+    """Get all equipment with overdue maintenance for a user"""
+    today = date.today()
+    with _connect() as conn:
+        cursor = conn.execute(
+            """SELECT ue.*, et.equipment_name, et.description, et.width, et.height, et.depth,
+                      et.maintenance_interval_days, et.color, et.manufacturer, et.model
+               FROM user_equipment ue
+               JOIN equipment_types et ON ue.equipment_type_id = et.id
+               WHERE ue.user_id = ? AND ue.next_maintenance_date < ?
+               ORDER BY ue.next_maintenance_date ASC""",
+            (user_id, today.isoformat())
+        )
+        equipment = cursor.fetchall()
+        return [_row_to_dict(item) for item in equipment]
+
+def get_maintenance_due(user_id, days_ahead=30):
+    """Get equipment with maintenance due within specified days"""
+    today = date.today()
+    future_date = today + timedelta(days=days_ahead)
+    with _connect() as conn:
+        cursor = conn.execute(
+            """SELECT ue.*, et.equipment_name, et.description, et.width, et.height, et.depth,
+                      et.maintenance_interval_days, et.color, et.manufacturer, et.model
+               FROM user_equipment ue
+               JOIN equipment_types et ON ue.equipment_type_id = et.id
+               WHERE ue.user_id = ?
+                 AND ue.next_maintenance_date >= ?
+                 AND ue.next_maintenance_date <= ?
+               ORDER BY ue.next_maintenance_date ASC""",
+            (user_id, today.isoformat(), future_date.isoformat())
+        )
+        equipment = cursor.fetchall()
+        return [_row_to_dict(item) for item in equipment]
+
+def get_maintenance_summary(user_id):
+    """Get maintenance summary for a user"""
+    overdue = len(get_overdue_maintenance(user_id))
+    due_soon = len(get_maintenance_due(user_id, days_ahead=30))
+    total_equipment = len(get_equipment_by_user(user_id))
+
+    return {
+        "user_id": user_id,
+        "total_equipment": total_equipment,
+        "overdue_maintenance": overdue,
+        "due_within_30_days": due_soon
+    }
+
 def get_maintenance_schedule_with_shops(user_id):
     """
     Get maintenance schedule for ALL equipment in user's shops
     Shows which shop each equipment is in
     """
     from shop_space_functions import get_shop_spaces_by_username
-    
+
     # Get user's username
     import sys
     sys.path.append(str(Path(__file__).parent))
     from users_functions import get_user_by_id
     user = get_user_by_id(user_id)
     username = user['username']
-    
+
     # Get all user's shop spaces
     shops = get_shop_spaces_by_username(username)
-    
+
     # Collect all equipment from all shops
     maintenance_items = []
     today = date.today()
-    
+
     for shop in shops:
         for placement in shop['equipment']:
             eq_id = placement['equipment_id']
-            
+
             # Get equipment details from equipment database using equipment_id
             eq_data = get_user_equipment_by_id(eq_id)
-            
+
             if not eq_data or not eq_data.get('next_maintenance_date'):
                 continue
-            
+
             next_date = date.fromisoformat(eq_data['next_maintenance_date'])
             days_until = (next_date - today).days
-            
+
             maintenance_items.append({
                 'equipment_id': eq_id,
                 'equipment_name': eq_data['equipment_name'],
@@ -237,12 +285,12 @@ def get_maintenance_schedule_with_shops(user_id):
                 'is_overdue': days_until < 0,
                 'is_due_soon': 0 <= days_until <= 7
             })
-    
+
     # Sort and categorize
     overdue = [m for m in maintenance_items if m['is_overdue']]
     this_week = [m for m in maintenance_items if m['is_due_soon']]
     upcoming = [m for m in maintenance_items if not m['is_overdue'] and not m['is_due_soon']]
-    
+
     return {
         "overdue": sorted(overdue, key=lambda x: x['days_until']),
         "this_week": sorted(this_week, key=lambda x: x['days_until']),
