@@ -7,7 +7,11 @@ import { Shop } from "../lib/models/Shop";
 import ShopCanvas from "../components/ShopCanvas";
 import ShopSidebar from "../components/ShopSidebar";
 import { addEquipmentToShop, getUserEquipment } from "../services/api";
+import { addEquipmentToUser } from "../services/api";
 import "../styles/ShopPage.css";
+import EquipmentDetailsPanel from "../components/EquipmentDetailsPanel";
+import { removeEquipmentFromShop } from "../services/api";
+
 
 const API_BASE = "http://localhost:5001/api";
 
@@ -17,12 +21,14 @@ export default function ShopPage({ user }) {
 
   const [shop, setShop] = useState(null);
   const [userEquipment, setUserEquipment] = useState([]);
-  const [zoom, setZoom] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
   const [renderTick, setRenderTick] = useState(0);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  
 
   // Form state for shop meta (name + dimensions)
   const [shopForm, setShopForm] = useState({
@@ -78,8 +84,6 @@ export default function ShopPage({ user }) {
           // Store placements to apply after user equipment loads
           shopInstance._pendingPlacements = data.equipment;
         }
-
-
         setShop(shopInstance);
 
         // Initialize form from loaded values
@@ -103,15 +107,12 @@ export default function ShopPage({ user }) {
         setLoading(false);
       }
     }
-
     fetchShop();
   }, [shopId]);
-
   // Fetch user's equipment for the sidebar
   useEffect(() => {
     async function fetchUserEquipment() {
       if (!user || !user.id) return;
-
       try {
         const response = await getUserEquipment(user.id);
         const equipment = response.equipment || [];
@@ -204,24 +205,64 @@ export default function ShopPage({ user }) {
 async function handleDropEquipment(eqConfig, x, y) {
   if (!shop) return;
 
-  // optimistic update for canvas
-  shop.addEquipment(eqConfig, x, y);
+  // 1) Local, optimistic update
+  const placed = shop.addEquipment(eqConfig, x, y);
+  console.log("Locally placed equipment:", placed);
+  console.log("Equipment count in shop:", shop.equipment_list.length);
+
   setRenderTick((t) => t + 1);
 
+  // 2) Persist to backend
   try {
     await addEquipmentToShop(shopId, {
-      equipmentId: eqConfig.id, // make sure eqConfig.id exists
+      equipmentId: eqConfig.id, // user_equipment.id
       x,
       y,
       z: 0,
     });
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (user && user.id) {
+      await addEquipmentToUser(user.id, {
+        equipment_type_id: eqConfig.id,
+        notes: "",
+        purchase_date: new Date().toISOString().split("T")[0],
+      });
+    }
   } catch (err) {
     console.error("Failed to save placement:", err);
-    // optional: rollback or show a toast
   }
 }
 
 
+function handleMoveEquipment(id, newX, newY) {
+  if (!shop) return;
+  shop.moveEquipment(id, newX, newY);
+  setRenderTick((t) => t + 1);
+}
+
+function handleSelectEquipment(id) {
+  setSelectedId(id);
+  setIsDetailsOpen(id != null); // open modal when something is selected
+}
+
+async function handleDeleteEquipment(equipment) {
+  if (!shop || !equipment) return;
+
+  // 1. Remove from in-memory model
+  shop.removeEquipmentById(equipment.id);
+  setSelectedId(null);
+  setRenderTick((t) => t + 1);
+  setIsDetailsOpen(false);
+
+  if (equipment.equipmentDbId) {
+    try {
+      await removeEquipmentFromShop(shopId, equipment.equipmentDbId);
+    } catch (err) {
+      console.error("Failed to delete equipment from backend:", err);
+    }
+  }
+}
 
   function rotateSelected(delta) {
     if (selectedId == null || !shop) return;
@@ -232,21 +273,18 @@ async function handleDropEquipment(eqConfig, x, y) {
   const selectedEq =
     selectedId != null && shop ? shop.getEquipmentById(selectedId) : null;
 
-  // 💾 Save and return to shop list
+
 async function handleSaveAndReturn() {
   if (!shop) return;
-
   setIsSaving(true);
   setSaveError("");
   setSaveSuccess(false);
-
   try {
     const payload = {
       length: shopForm.length,
       width: shopForm.width,
       height: shopForm.height,
     };
-
     const res = await axios.put(`${API_BASE}/shops/${shopId}`, payload);
     const updated = res.data.shop;
 
@@ -262,8 +300,6 @@ async function handleSaveAndReturn() {
       setShopForm({ name: shopForm.name, length, width, height });
       setRenderTick((t) => t + 1);
     }
-
-    // 🚀 Navigate back to list
     navigate("/shop-spaces");
 
   } catch (err) {
@@ -273,7 +309,6 @@ async function handleSaveAndReturn() {
     setIsSaving(false);
   }
 }
-
 
   if (loading) {
     return (
@@ -312,16 +347,12 @@ async function handleSaveAndReturn() {
         shopId={shopId}
         equipmentCatalog={userEquipment}
         onDragStart={handleDragStart}
-        zoom={zoom}
-        setZoom={setZoom}
         selectedEq={selectedEq}
         rotateSelected={rotateSelected}
         isEditing={isEditing}
         toggleEditing={toggleEditing}
-        // form + handlers
         shopForm={shopForm}
         onShopFormChange={handleShopFormChange}
-        // save wiring
         onSaveAndReturn={handleSaveAndReturn}
         isSaving={isSaving}
         saveError={saveError}
@@ -331,13 +362,27 @@ async function handleSaveAndReturn() {
       <section className="shop-workspace">
         <ShopCanvas
           shop={shop}
-          zoom={zoom}
           selectedId={selectedId}
           renderTick={renderTick}
-          onSelectEquipment={setSelectedId}
+          onSelectEquipment={handleSelectEquipment}
           onDropEquipment={handleDropEquipment}
+          onMoveEquipment={handleMoveEquipment}     
+          onDeleteEquipment={handleDeleteEquipment}
         />
       </section>
+
+      {isDetailsOpen && selectedEq && (
+        <EquipmentDetailsPanel
+          equipment={selectedEq}
+          onClose={() => {
+            setIsDetailsOpen(false);
+            setSelectedId(null);
+          }}
+          onDelete={handleDeleteEquipment}
+          onRotate={(delta) => rotateSelected(delta)}
+        />
+      )}
+
     </main>
   );
 }

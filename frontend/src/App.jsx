@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import ShopSpaces from './components/ShopSpaces'
 import EquipmentCatalog from './pages/EquipmentCatalog'
+import MyEquipment from './pages/MyEquipment' 
 import NewShopPage from './pages/NewShopPage'
 import ShopPage from './pages/ShopPage'        // 👈 make sure this line exists
 import './styles/App.css'
@@ -56,6 +57,12 @@ function App() {
             element={user ? <MaintenancePage user={user} /> : <Navigate to="/login" />}
           />
 
+
+          {/* My Equipment */}
+          <Route
+            path="/my-equipment"
+            element={user ? <MyEquipment user={user} /> : <Navigate to="/login" />}
+          />
 
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>

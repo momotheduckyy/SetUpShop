@@ -4,7 +4,7 @@ export const equipmentCatalog = [
   {
     id: 1,
     name: "Table Saw",
-    widthFt: 3,
+    widthFt: 6,
     depthFt: 3,
     color: "#f99",
     manufacturer: "SawStop",

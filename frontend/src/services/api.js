@@ -203,19 +203,21 @@ export const deleteShop = async (shopId) => {
   }
 }
 
-export const addEquipmentToShop = async (shopId, { equipmentId, x, y, z = 0 }) => {
+export async function addEquipmentToShop(shopId, { equipmentId, x, y, z = 0 }) {
   try {
     const response = await api.post(`/shops/${shopId}/equipment`, {
-      equipment_id: equipmentId,  // matches backend route
+      equipment_id: equipmentId,   
       x_coordinate: x,
       y_coordinate: y,
       z_coordinate: z,
-    })
-    return response.data          // { message, shop }
+    });
+    return response.data;
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
+
+
 
 
 export const removeEquipmentFromShop = async (shopId, equipmentId) => {

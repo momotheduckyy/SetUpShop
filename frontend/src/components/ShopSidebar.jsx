@@ -4,14 +4,12 @@ import React from "react";
 import ShopForm from "./ShopForm";
 import SaveButton from "./SaveButton";
 import "../styles/ShopSidebar.css";
+import { equipmentCatalog } from "../lib/data/equipmentCatalog";
 
 export default function ShopSidebar({
   shop,
   shopId,
-  equipmentCatalog,
   onDragStart,
-  zoom,
-  setZoom,
   selectedEq,
   rotateSelected,
   isEditing,
@@ -25,17 +23,17 @@ export default function ShopSidebar({
 }) {
   return (
     <aside className="shop-sidebar">
-      {/* Header + Edit toggle */}
+      {/* Header + Edit toggle + form */}
       <div className="shop-header">
-              {/* Shop metadata form */}
-      {shopForm && (
-        <ShopForm
-          newShopForm={shopForm}
-          onChange={onShopFormChange}
-          isEditing={isEditing}
-          shopId={shopId}
-        />
-      )}
+        {shopForm && (
+          <ShopForm
+            newShopForm={shopForm}
+            onChange={onShopFormChange}
+            isEditing={isEditing}
+            shopId={shopId}
+          />
+        )}
+
         <button
           type="button"
           className={`shop-edit-btn ${isEditing ? "editing" : ""}`}
@@ -46,7 +44,7 @@ export default function ShopSidebar({
       </div>
 
       {/* Equipment list for drag/drop */}
-      <div>
+      <div className="sidebar-section">
         <h4>Equipment</h4>
         {equipmentCatalog.map((eq) => (
           <div
@@ -60,53 +58,12 @@ export default function ShopSidebar({
         ))}
       </div>
 
-      {/* Zoom controls */}
-      <div className="zoom-controls">
-        <h4>Zoom</h4>
-        <div className="zoom-buttons">
-          <button onClick={() => setZoom((z) => Math.min(z + 0.1, 2))}>+</button>
-          <button onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}>
-            −
-          </button>
-          <button onClick={() => setZoom(1)}>Reset</button>
-        </div>
-        <p className="zoom-display">{Math.round(zoom * 100)}%</p>
-      </div>
 
-      {/* Selected equipment details */}
-      <div className="selected-panel">
-        <h4>Selected Equipment</h4>
-        {selectedEq ? (
-          <div>
-            <p>
-              <strong>{selectedEq.name}</strong>
-            </p>
-            {selectedEq.manufacturer && (
-              <p>Manufacturer: {selectedEq.manufacturer}</p>
-            )}
-            {selectedEq.model && <p>Model: {selectedEq.model}</p>}
-            {selectedEq.maintenanceIntervalDays && (
-              <p>Maintenance: every {selectedEq.maintenanceIntervalDays} days</p>
-            )}
-            {selectedEq.maintenanceNotes && (
-              <p className="selected-notes">Notes: {selectedEq.maintenanceNotes}</p>
-            )}
-
-            <div className="rotation-buttons">
-              <button onClick={() => rotateSelected(-15)}>Rotate -15°</button>
-              <button onClick={() => rotateSelected(15)}>Rotate +15°</button>
-            </div>
-          </div>
-        ) : (
-          <p>Click a machine in the layout.</p>
-        )}
-      </div>
-           {/* Save & Return */}
+      {/* Save & Return */}
       <div className="shop-save-row">
         <SaveButton
           onClick={onSaveAndReturn}
           isSaving={isSaving}
-          disabled={!isEditing}
           label="Save & Return"
         />
 
@@ -115,8 +72,12 @@ export default function ShopSidebar({
             {saveError}
           </span>
         )}
+        {saveSuccess && !saveError && (
+          <span className="shop-save-status shop-save-status--ok">
+            Saved!
+          </span>
+        )}
       </div>
-
     </aside>
   );
 }
