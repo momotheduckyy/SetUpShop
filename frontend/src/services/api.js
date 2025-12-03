@@ -62,13 +62,14 @@ export const searchUsers = async (searchTerm) => {
   }
 }
 
-// Equipment Catalog API
-export const getEquipmentCatalog = async () => {
+
+export async function getEquipmentCatalog() {
   try {
-    const response = await api.get('/equipment/catalog')
-    return response.data
-  } catch (error) {
-    handleError(error)
+    const res = await api.get("/equipment/catalog");
+    return res.data;
+  } catch (err) {
+    console.error("API error in getEquipmentCatalog:", err);
+    throw err;
   }
 }
 
@@ -90,7 +91,7 @@ export const addEquipmentType = async (equipmentData) => {
   }
 }
 
-// User Equipment API
+
 export const getUserEquipment = async (userId) => {
   try {
     const response = await api.get(`/equipment/user/${userId}`)
@@ -202,6 +203,8 @@ export const deleteShop = async (shopId) => {
     handleError(error)
   }
 }
+
+
 
 export async function addEquipmentToShop(shopId, { equipmentId, x, y, z = 0 }) {
   try {

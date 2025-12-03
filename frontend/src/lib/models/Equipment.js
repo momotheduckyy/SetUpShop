@@ -1,8 +1,7 @@
-// frontend/src/lib/models/Equipment.js
-
 export class Equipment {
   constructor({
     id,
+    equipmentDbId = null,  // ✅ DB user_equipment.id, if any
     name,
     widthFt,
     depthFt,
@@ -16,16 +15,17 @@ export class Equipment {
     maintenanceIntervalDays = null,
     maintenanceNotes = "",
   }) {
-    this.id = id;
+    this.id = id;                    // local canvas id
+    this.equipmentDbId = equipmentDbId; // DB id for /shops/:id/equipment calls
+
     this.name = name;
     this.widthFt = widthFt;
     this.depthFt = depthFt;
     this.color = color;
-    this.x = x; // canvas center x in pixels
-    this.y = y; // canvas center y in pixels
+    this.x = x;
+    this.y = y;
     this.rotationDeg = rotationDeg;
 
-    // richer metadata
     this.manufacturer = manufacturer;
     this.model = model;
     this.make = make;

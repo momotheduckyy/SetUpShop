@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 import sys
 from pathlib import Path
+from models.placement import Position, EquipmentPlacement
+
 
 # Add repo directory to Python path
 sys.path.append(str(Path(__file__).parent.parent.parent / "repo"))
@@ -85,43 +87,49 @@ def create_shop():
 def add_equipment_to_shop(shop_id):
     """Add equipment to shop space"""
     try:
-        data = request.get_json()
-        
-        # Create Position object from coordinates
-        position = Position(
-            x=data.get('x_coordinate'),
-            y=data.get('y_coordinate'),
-            z=data.get('z_coordinate')
-        )
-        
-        # Create EquipmentPlacement object
+        data = request.get_json() or {}
+        print("DEBUG incoming payload:", data)
+
+        equipment_id = data.get('equipment_id')
+        x = data.get('x_coordinate')
+        y = data.get('y_coordinate')
+        z = data.get('z_coordinate', 0.0)
+        rotationDeg = data.get('rotationDeg', 0.0)
+
+        # validate
+        if equipment_id is None:
+            return jsonify({"error": "equipment_id is required"}), 400
+        if x is None or y is None:
+            return jsonify({"error": "x_coordinate and y_coordinate are required"}), 400
+
+        # Build Position + EquipmentPlacement with rotation
+        position = Position(float(x), float(y), float(z))
         placement = EquipmentPlacement(
-            equipment_id=data.get('equipment_id'),
-            position=position
+            equipment_id=int(equipment_id),
+            position=position,
+            rotationDeg=float(rotationDeg)
         )
-        
-        # Validate required fields
-        if placement.equipment_id is None:
-            return jsonify({"error": "Equipment ID is required"}), 400
-        
-        if any(coord is None for coord in [position.x, position.y, position.z]):
-            return jsonify({"error": "All coordinates are required"}), 400
-        
-        # Call function with clean interface (only 2 parameters!)
+
+        # Save to DB
         shop = add_equipment_to_shop_space(shop_id, placement)
-        
+
         if shop:
             return jsonify({
                 "message": "Equipment added to shop successfully",
-                "shop": shop
+                "shop": shop,
             }), 200
         else:
             return jsonify({"error": "Failed to add equipment"}), 500
-            
+
     except ValueError as e:
+        print("DEBUG ValueError:", e)
         return jsonify({"error": str(e)}), 400
     except Exception as e:
+        print("DEBUG Exception:", e)
         return jsonify({"error": str(e)}), 500
+
+
+
 
 @shop_bp.route('/<shop_id>', methods=['GET'])
 def get_shop(shop_id):

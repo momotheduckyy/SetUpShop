@@ -18,9 +18,10 @@ class Position:
 
 @dataclass
 class EquipmentPlacement:
-    """Represents equipment placement with position and metadata"""
+    """Represents equipment placement with position, rotation, and metadata"""
     equipment_id: int
     position: Position
+    rotationDeg: float = 0.0
     date_added: str = None
     
     def __post_init__(self):
@@ -35,7 +36,8 @@ class EquipmentPlacement:
             "date_added": self.date_added,
             "x_coordinate": self.position.x,
             "y_coordinate": self.position.y,
-            "z_coordinate": self.position.z
+            "z_coordinate": self.position.z,
+            "rotationDeg": self.rotationDeg,
         }
     
     @classmethod
@@ -44,10 +46,11 @@ class EquipmentPlacement:
         position = Position(
             x=data['x_coordinate'],
             y=data['y_coordinate'],
-            z=data['z_coordinate']
+            z=data.get('z_coordinate', 0.0)
         )
         return cls(
             equipment_id=data['equipment_id'],
             position=position,
+            rotationDeg=data.get("rotationDeg", 0.0),
             date_added=data.get('date_added')
         )

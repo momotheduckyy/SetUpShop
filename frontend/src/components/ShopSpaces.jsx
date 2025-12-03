@@ -11,8 +11,8 @@ function ShopSpaces({ user }) {
   const [createError, setCreateError] = useState('')
   const [newShopForm, setNewShopForm] = useState({
     shopName: '',
-    length: 40,
-    width: 30,
+    length: 20,
+    width: 20,
     height: 10
   })
 
@@ -38,8 +38,8 @@ function ShopSpaces({ user }) {
     setCreateError('')
     setNewShopForm({
       shopName: '',
-      length: 40,
-      width: 30,
+      length: 20,
+      width: 20,
       height: 10
     })
   }

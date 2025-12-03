@@ -63,11 +63,8 @@ export default function ShopForm({
         </div>
       </fieldset>
 
-      {shopId && (
-        <p className="shop-form-shop-id">
-          Current shop ID: <strong>{shopId}</strong>
-        </p>
-      )}
+
+
     </div>
   );
 }
