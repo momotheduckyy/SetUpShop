@@ -297,6 +297,7 @@ def get_maintenance_schedule_with_shops(user_id):
         "upcoming": sorted(upcoming, key=lambda x: x['days_until'])
     }
 
+
 # HELPER FUNCTIONS
 
 def days_to_readable_interval(days):
