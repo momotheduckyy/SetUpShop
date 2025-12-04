@@ -1,97 +1,155 @@
 // frontend/src/components/ShopSidebar.jsx
 
-import React from "react";
+import { useState } from "react";
 import ShopForm from "./ShopForm";
-import SaveButton from "./SaveButton";
 import "../styles/ShopSidebar.css";
 
 export default function ShopSidebar({
   shop,
-  shopId,
-  equipmentCatalog,
-  onDragStart,
-  selectedEq,
-  rotateSelected,
   shopForm,
-  onShopFormChange,
-  onSaveAndReturn,
-  isSaving,
-  saveError,
-  saveSuccess,
   gridSizeFt,
+  equipmentCatalog,
+  onShopFormChange,
   onGridSizeChange,
+  onDragStart,
+  showUseAreas,       
+  onToggleUseAreas,   
 }) {
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const hasShop = !!shop;
+
   return (
     <aside className="shop-sidebar">
-      {/* Header + form (always editable) */}
-      <div className="shop-header">
-        {shopForm && (
-          <ShopForm
-            newShopForm={shopForm}
-            onChange={onShopFormChange}
-            isEditing={true}
-            shopId={shopId}
-          />
+      {/* HEADER */}
+      <div className="shop-sidebar-header">
+        <h2 className="shop-sidebar-title">
+          {shopForm.name || (hasShop ? shop.name : "Shop Layout")}
+        </h2>
+        {hasShop && (
+          <div className="shop-sidebar-subtitle">
+            {shopForm.width} ft × {shopForm.length} ft
+          </div>
         )}
       </div>
 
-      {/* Equipment list for drag/drop */}
-      <div className="sidebar-section">
-        <h4>Equipment</h4>
-        {equipmentCatalog && equipmentCatalog.length > 0 ? (
-          equipmentCatalog.map((eq) => (
-            <div
-              key={eq.id}
-              className="equipment-tile"
-              draggable
-              onDragStart={(e) => onDragStart(e, eq)}
-            >
-              {eq.name}
+      {/* STATE 1: MAIN INFO / STATIC VIEW */}
+      {!isCatalogOpen && (
+        <div className="shop-sidebar-body">
+          {/* Shop dimensions / meta */}
+          <section className="shop-sidebar-section">
+            <h3 className="shop-sidebar-section-title">Shop Settings</h3>
+            <ShopForm shopForm={shopForm} onChange={onShopFormChange} />
+          </section>
+
+          {/* Snap grid control */}
+          <section className="shop-sidebar-section">
+            <h3 className="shop-sidebar-section-title">Snap to Grid</h3>
+            <div className="shop-sidebar-grid-row">
+              <select
+                value={gridSizeFt}
+                onChange={(e) => onGridSizeChange(Number(e.target.value))}
+                className="shop-sidebar-select"
+              >
+                <option value={0.25}>0.25 ft</option>
+                <option value={0.5}>0.5 ft</option>
+                <option value={1}>1 ft</option>
+                <option value={2}>2 ft</option>
+              </select>
+              <span className="shop-sidebar-grid-hint">
+                Current: {gridSizeFt} ft
+              </span>
             </div>
-          ))
-        ) : (
-          <p style={{ fontSize: '0.875rem', color: '#6e6e73', padding: '0.5rem 0' }}>
-            No equipment available
+          </section>
+
+        {/* ✅ Show Clearance Zones toggle */}
+          <section className="shop-sidebar-section">
+            <div className="shop-sidebar-grid-row">
+              <input
+                type="checkbox"
+                checked={showUseAreas}
+                onChange={onToggleUseAreas}
+                style={{ marginRight: 8 }}
+              />
+              <span className="shop-sidebar-grid-hint">
+                Show Clearance Zones
+              </span>
+            </div>
+          </section>
+
+          {/* Add equipment button */}
+          <section className="shop-sidebar-section">
+            <button
+              type="button"
+              className="shop-sidebar-primary-button"
+              onClick={() => setIsCatalogOpen(true)}
+            >
+              + Add Equipment
+            </button>
+          </section>
+        </div>
+      )}
+
+      {/* STATE 2: EQUIPMENT CATALOG */}
+      {isCatalogOpen && (
+        <div className="shop-sidebar-body">
+          <div className="shop-sidebar-catalog-header">
+            <button
+              type="button"
+              className="shop-sidebar-secondary-button"
+              onClick={() => setIsCatalogOpen(false)}
+            >
+              ← Back
+            </button>
+            <h3 className="shop-sidebar-section-title">Equipment Catalog</h3>
+          </div>
+
+          <div className="shop-sidebar-catalog-list">
+            {equipmentCatalog.length === 0 && (
+              <div className="shop-sidebar-empty">
+                No equipment types found.
+              </div>
+            )}
+
+            {equipmentCatalog.map((eq) => {
+              const title = eq.manufacturer
+                ? `${eq.manufacturer} ${eq.name}`
+                : eq.name;
+
+              const subtitle = [
+                `${eq.widthFt.toFixed(1)} ft × ${eq.depthFt.toFixed(1)} ft`,
+                eq.model && `${eq.model}`,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+
+              return (
+                <div
+                  key={eq.id}
+                  className="shop-sidebar-equipment-card"
+                  draggable
+                  onDragStart={(e) => onDragStart(e, eq)}
+                  title={title}
+                >
+                  <div
+                    className="shop-sidebar-equipment-color-chip"
+                    style={{ backgroundColor: eq.color || "#aaa" }}
+                  />
+                  <div className="shop-sidebar-equipment-main">
+                    <div className="shop-sidebar-equipment-name">{title}</div>
+                    <div className="shop-sidebar-equipment-meta">
+                      {subtitle}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="shop-sidebar-hint">
+            Drag an item from this list onto the shop canvas to place it.
           </p>
-        )}
-      </div>
-
-      <section className="sidebar-section">
-        <h3 className="sidebar-section-title">Grid Size</h3>
-        <label className="sidebar-label" htmlFor="grid-size-select">
-          Snap equipment to:
-        </label>
-        <select
-          id="grid-size-select"
-          className="sidebar-select"
-          value={gridSizeFt}
-          onChange={(e) => onGridSizeChange?.(parseFloat(e.target.value))}
-        >
-          <option value={0.25}>(0.25 ft)</option>
-          <option value={0.5}>(0.5 ft)</option>
-          <option value={1}>(1 ft)</option>
-        </select>
-      </section>
-
-      {/* Save & Return */}
-      <div className="shop-save-row">
-        <SaveButton
-          onClick={onSaveAndReturn}
-          isSaving={isSaving}
-          label="Save & Return"
-        />
-
-        {saveError && (
-          <span className="shop-save-status shop-save-status--error">
-            {saveError}
-          </span>
-        )}
-        {saveSuccess && !saveError && (
-          <span className="shop-save-status shop-save-status--ok">
-            Saved!
-          </span>
-        )}
-      </div>
+        </div>
+      )}
     </aside>
   );
 }

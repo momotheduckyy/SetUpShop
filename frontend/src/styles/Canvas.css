@@ -1,10 +1,14 @@
+.shop-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .shop-canvas {
   width: 100%;
   height: 100%;
   display: block;
   background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-sizing: border-box;
 }
 
 .shop-canvas-grid {

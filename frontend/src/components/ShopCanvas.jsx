@@ -1,6 +1,10 @@
 // frontend/src/components/ShopCanvas.jsx
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import EquipmentCrown from "./EquipmentCrown";
+import { drawEquipmentPictogram, drawEquipmentUseArea } from "../utils/equipmentPictograms";
+import { canPlaceEquipment } from "../utils/collisionUtils";
+
 import "../styles/Canvas.css";
 
 export default function ShopCanvas({
@@ -10,7 +14,9 @@ export default function ShopCanvas({
   onSelectEquipment,
   onDropEquipment,
   onMoveEquipment,
-  onRemoveEquipment, // not used yet, but kept for later
+  onRemoveEquipment, // used for delete
+  rotateSelected,    // passed from parent
+  showUseAreas,      
 }) {
   const canvasRef = useRef(null);
 
@@ -27,7 +33,12 @@ export default function ShopCanvas({
     equipmentId: null,
     offsetX: 0, // mouse offset from equipment center (x)
     offsetY: 0, // mouse offset from equipment center (y)
+    startX: 0,  // initial equipment position at drag start
+    startY: 0,  // initial equipment position at drag start
   });
+
+  // Crown position in pixel coordinates (relative to canvas)
+  const [crownPos, setCrownPos] = useState(null);
 
   // --- Drawing logic (auto-fit canvas to workspace, draw grid + equipment) ---
   useEffect(() => {
@@ -45,6 +56,7 @@ export default function ShopCanvas({
     const { width: parentW, height: parentH } = parent.getBoundingClientRect();
     if (parentW === 0 || parentH === 0) return;
 
+    // Make canvas match parent size
     canvas.width = parentW;
     canvas.height = parentH;
 
@@ -52,6 +64,7 @@ export default function ShopCanvas({
     const shopWidth = shop.widthFt;
     const shopDepth = shop.depthFt;
 
+    // Choose scale so the whole shop fits with a bit of margin
     const scaleX = (parentW * paddingRatio) / shopWidth;
     const scaleY = (parentH * paddingRatio) / shopDepth;
     const scale = Math.min(scaleX, scaleY);
@@ -67,11 +80,11 @@ export default function ShopCanvas({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
 
-    // 1 ft in shop space = 1 unit in our drawing space
+    // Work in "feet space": 1 unit = 1 foot
     ctx.translate(offsetX, offsetY);
     ctx.scale(scale, scale);
 
-    // --- Grid in feet ---
+    // --- Grid in feet (1 ft spacing; snapping handled elsewhere) ---
     ctx.strokeStyle = "#ddd";
     ctx.lineWidth = 1 / scale;
 
@@ -89,6 +102,16 @@ export default function ShopCanvas({
       ctx.stroke();
     }
 
+    // --- Dark border around the grid rectangle ---
+    ctx.strokeStyle = "#111";      // dark border color
+    ctx.lineWidth = 2 / scale;     // keep ~constant thickness in screen pixels
+    ctx.strokeRect(
+      0,          // left edge in feet
+      0,          // top edge in feet
+      shopWidth,  // width in feet
+      shopDepth   // height in feet
+    );
+
     // --- Equipment (positions & sizes in feet) ---
     for (const eq of shop.equipment_list) {
       const w = eq.widthFt;
@@ -100,51 +123,32 @@ export default function ShopCanvas({
       ctx.translate(x, y);
       ctx.rotate(((eq.rotationDeg || 0) * Math.PI) / 180);
 
+      // 🔹 Use area (dashed outline, same color @ 75% opacity) if toggled
+      if (showUseAreas) {
+        drawEquipmentUseArea(ctx, eq, w, h);
+      }  
+      
+      // Body
       ctx.fillStyle = eq.color || "#aaa";
       ctx.fillRect(-w / 2, -h / 2, w, h);
 
+      // Outline (thicker for selected)
       const isSelected = eq.id === selectedId;
       ctx.strokeStyle = isSelected ? "#ff0000" : "#333";
       ctx.lineWidth = isSelected ? 3 / scale : 1 / scale;
       ctx.strokeRect(-w / 2, -h / 2, w, h);
 
-      // Calculate appropriate font size based on equipment dimensions
-      let fontSize = Math.min(w / 6, h / 3, 2); // Dynamic font size in feet
-      ctx.font = `bold ${fontSize}px sans-serif`;
-      ctx.textBaseline = "middle";
-      ctx.textAlign = "center";
+        // 🔹 pictogram:
+      drawEquipmentPictogram(ctx, eq, w, h);
+      
 
-      // Measure and fit text to box width
-      const maxWidth = w * 0.9; // Use 90% of equipment width
-      let displayText = eq.name;
-      let textWidth = ctx.measureText(displayText).width;
-
-      // If text is too wide, reduce font size first, then truncate if needed
-      while (textWidth > maxWidth && fontSize > 0.5) {
-        fontSize *= 0.9;
-        ctx.font = `bold ${fontSize}px sans-serif`;
-        textWidth = ctx.measureText(displayText).width;
-      }
-
-      // If still too wide after font reduction, truncate with ellipsis
-      if (textWidth > maxWidth) {
-        while (textWidth > maxWidth && displayText.length > 3) {
-          displayText = displayText.slice(0, -1);
-          textWidth = ctx.measureText(displayText + '...').width;
-        }
-        displayText += '...';
-      }
-
-      // Draw text in dark color
-      ctx.fillStyle = "#1d1d1f";
-      ctx.fillText(displayText, 0, 0);
 
       ctx.restore();
     }
 
     ctx.restore();
 
-    // --- Rulers/Measurement Lines ---
+    // --- Rulers/Measurement Lines (outside the transformed space) ---
     ctx.save();
     ctx.fillStyle = "#1d1d1f";
     ctx.strokeStyle = "#1d1d1f";
@@ -160,7 +164,7 @@ export default function ShopCanvas({
 
     // Tick marks for bottom ruler - every 5 feet
     for (let i = 0; i <= shopWidth; i += 5) {
-      const x = offsetX + (i * scale);
+      const x = offsetX + i * scale;
       ctx.beginPath();
       ctx.moveTo(x, rulerBottomY - 5);
       ctx.lineTo(x, rulerBottomY + 5);
@@ -181,7 +185,7 @@ export default function ShopCanvas({
 
     // Tick marks for right ruler - every 5 feet
     for (let i = 0; i <= shopDepth; i += 5) {
-      const y = offsetY + (i * scale);
+      const y = offsetY + i * scale;
       ctx.beginPath();
       ctx.moveTo(rulerRightX - 5, y);
       ctx.lineTo(rulerRightX + 5, y);
@@ -198,7 +202,29 @@ export default function ShopCanvas({
     }
 
     ctx.restore();
-  }, [shop, selectedId, renderTick]);
+
+    // --- Compute crown position for selected equipment (in pixels) ---
+    if (selectedId != null && typeof shop.getEquipmentById === "function") {
+      const eq = shop.getEquipmentById(selectedId);
+      if (eq) {
+        const { scale: s, offsetX: ox, offsetY: oy } = viewRef.current;
+
+        const cx = ox + eq.x * s;
+        const cy = oy + eq.y * s;
+        const hPx = eq.depthFt * s;
+
+        // Crown center above the tool
+        const crownX = cx;
+        const crownY = cy - hPx / 2 - 24; // 24px above top edge-ish
+
+        setCrownPos({ x: crownX, y: crownY });
+      } else {
+        setCrownPos(null);
+      }
+    } else {
+      setCrownPos(null);
+    }
+  }, [shop, selectedId, renderTick, showUseAreas]);
 
   // --- Helpers: coords & hit-testing ---
 
@@ -220,6 +246,7 @@ export default function ShopCanvas({
   function findEquipmentAtPosition(x, y) {
     if (!shop) return null;
 
+    // Check from topmost to bottommost
     const reversed = [...shop.equipment_list].reverse();
     for (const eq of reversed) {
       const w = eq.widthFt;
@@ -253,41 +280,42 @@ export default function ShopCanvas({
     const coords = getShopCoordsFromEvent(e);
     if (!coords) return;
 
-    // coords.x, coords.y are in feet
     onDropEquipment?.(eqConfig, coords.x, coords.y);
   }
 
-  function handleMouseDown(e) {
-    if (!shop) return;
-    e.preventDefault();
+function handleMouseDown(e) {
+  if (!shop) return;
+  e.preventDefault();
 
-    const coords = getShopCoordsFromEvent(e);
-    if (!coords) return;
+  const coords = getShopCoordsFromEvent(e);
+  if (!coords) return;
 
-    const eq = findEquipmentAtPosition(coords.x, coords.y);
+  const eq = findEquipmentAtPosition(coords.x, coords.y);
 
-    if (eq) {
-      // Select this equipment
-      onSelectEquipment?.(eq.id);
+  if (eq) {
+    onSelectEquipment?.(eq.id);
 
-      // Start dragging
-      dragRef.current = {
-        isDragging: true,
-        equipmentId: eq.id,
-        offsetX: coords.x - eq.x,
-        offsetY: coords.y - eq.y,
-      };
-    } else {
-      // Clicked empty space: clear selection
-      onSelectEquipment?.(null);
-      dragRef.current = {
-        isDragging: false,
-        equipmentId: null,
-        offsetX: 0,
-        offsetY: 0,
-      };
-    }
+    dragRef.current = {
+      isDragging: true,
+      equipmentId: eq.id,
+      offsetX: coords.x - eq.x,
+      offsetY: coords.y - eq.y,
+      startX: eq.x,          // 👈 remember where we started
+      startY: eq.y,
+    };
+  } else {
+    onSelectEquipment?.(null);
+    dragRef.current = {
+      isDragging: false,
+      equipmentId: null,
+      offsetX: 0,
+      offsetY: 0,
+      startX: null,
+      startY: null,
+    };
   }
+}
+
 
   function handleMouseMove(e) {
     const dragState = dragRef.current;
@@ -299,24 +327,81 @@ export default function ShopCanvas({
     const newX = coords.x - dragState.offsetX;
     const newY = coords.y - dragState.offsetY;
 
-    // Tell parent to move the equipment (this mutates Shop + re-renders)
     onMoveEquipment?.(dragState.equipmentId, newX, newY);
   }
 
-  function handleMouseUp() {
+function handleMouseUp() {
+  const dragState = dragRef.current;
+  if (!shop || !dragState.equipmentId) {
     dragRef.current.isDragging = false;
     dragRef.current.equipmentId = null;
+    return;
+  }
+
+  const id = dragState.equipmentId;
+
+  // Get the final equipment state
+  const eq = shop.getEquipmentById
+    ? shop.getEquipmentById(id)
+    : shop.equipment_list.find((e) => e.id === id);
+
+  if (eq) {
+    const finalX = eq.x;
+    const finalY = eq.y;
+
+    // If this final position overlaps others → revert
+    if (!canPlaceEquipment(shop, eq, finalX, finalY, id)) {
+      const { startX, startY } = dragState;
+      if (startX != null && startY != null) {
+        onMoveEquipment?.(id, startX, startY);
+      }
+    }
+  }
+
+  // Clear drag state
+  dragRef.current = {
+    isDragging: false,
+    equipmentId: null,
+    offsetX: 0,
+    offsetY: 0,
+    startX: null,
+    startY: null,
+  };
+}
+
+
+  // Optional: wrapper to call delete with actual eq object
+  function handleDeleteSelected() {
+    if (!shop || selectedId == null || !onRemoveEquipment) return;
+    const eq = shop.getEquipmentById
+      ? shop.getEquipmentById(selectedId)
+      : null;
+    if (eq) {
+      onRemoveEquipment(eq);
+    }
   }
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="shop-canvas"
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-    />
+    <div className="shop-canvas-wrapper">
+      <canvas
+        ref={canvasRef}
+        className="shop-canvas"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+      />
+      {selectedId != null && crownPos && (
+        <EquipmentCrown
+          key={`${selectedId}-${Date.now()}`} // 👑 force remount
+          x={crownPos.x}
+          y={crownPos.y}
+          onRotateLeft={() => rotateSelected && rotateSelected(-15)}
+          onRotateRight={() => rotateSelected && rotateSelected(15)}
+          onDelete={handleDeleteSelected}
+        />
+      )}
+    </div>
   );
 }

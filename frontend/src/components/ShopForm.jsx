@@ -1,63 +1,66 @@
+// frontend/src/components/ShopForm.jsx
 
-import React from "react";
-import "../styles/ShopForm.css";
+import "../styles/ShopSidebar.css";
 
-export default function ShopForm({
-  newShopForm,
-  onChange,
-}) {
+export default function ShopForm({ shopForm = {}, onChange }) {
+  const {
+    name = "",
+    width = 30,
+    length = 40,
+    height = 10,
+  } = shopForm;
+
   return (
-    <div className="shop-form-container">
-      <h3 className="shop-form-heading">Shop Details</h3>
+    <div className="shop-form">
+      {/* Name — big full-width input */}
+      <label className="shop-sidebar-label shop-name-label">
+        Name
+        <input
+          type="text"
+          name="name"
+          value={name}
+          onChange={onChange}
+          className="shop-sidebar-input shop-name-input"
+        />
+      </label>
 
-      <div className="shop-form-fieldset">
-        {/* Shop Name */}
-        <div className="shop-form-field">
-          <label>Shop Name</label>
+      {/* Dimensions row: W, L, H */}
+      <div className="shop-dimensions-row">
+        <label className="shop-sidebar-label small-dim">
+          W
           <input
-            type="text"
-            name="name"
-            value={newShopForm.name}
+            type="number"
+            name="width"
+            value={width}
             onChange={onChange}
-            className="shop-form-input"
+            className="shop-sidebar-input small-dim-input"
+            min={1}
           />
-        </div>
+        </label>
 
-        {/* Dimensions */}
-        <div className="shop-form-dimensions">
-          <div>
-            <label>Length (ft)</label>
-            <input
-              type="number"
-              name="length"
-              value={newShopForm.length}
-              onChange={onChange}
-              className="shop-form-input"
-            />
-          </div>
+        <label className="shop-sidebar-label small-dim">
+          L
+          <input
+            type="number"
+            name="length"
+            value={length}
+            onChange={onChange}
+            className="shop-sidebar-input small-dim-input"
+            min={1}
+          />
+        </label>
 
-          <div>
-            <label>Width (ft)</label>
-            <input
-              type="number"
-              name="width"
-              value={newShopForm.width}
-              onChange={onChange}
-              className="shop-form-input"
-            />
-          </div>
-
-          <div>
-            <label>Height (ft)</label>
-            <input
-              type="number"
-              name="height"
-              value={newShopForm.height}
-              onChange={onChange}
-              className="shop-form-input"
-            />
-          </div>
-        </div>
+        <label className="shop-sidebar-label small-dim">
+          H
+          <input
+            type="number"
+            name="height"
+            value={height}
+            onChange={onChange}
+            className="shop-sidebar-input small-dim-input"
+            min={1}
+          />
+        </label>
       </div>
     </div>
   );
