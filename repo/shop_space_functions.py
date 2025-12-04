@@ -246,7 +246,7 @@ def remove_equipment_from_shop_space(shop_id, equipment_id):
             return get_shop_space_by_id(shop_id)
         return None
 
-def update_equipment_position(shop_id, equipment_id, x=None, y=None, z=None):
+def update_equipment_position(shop_id, equipment_id, x=None, y=None, z=None, rotation_deg=None):
     """
     Update the position of equipment in a shop space
 
@@ -256,6 +256,7 @@ def update_equipment_position(shop_id, equipment_id, x=None, y=None, z=None):
         x (float, optional): New x coordinate
         y (float, optional): New y coordinate
         z (float, optional): New z coordinate
+        rotation_deg (float, optional): New rotation in degrees
 
     Returns:
         dict: Updated shop space data or None if failed
@@ -277,6 +278,8 @@ def update_equipment_position(shop_id, equipment_id, x=None, y=None, z=None):
                 eq['y_coordinate'] = y
             if z is not None:
                 eq['z_coordinate'] = z
+            if rotation_deg is not None:
+                eq['rotation_deg'] = rotation_deg
             break
 
     if not equipment_found:

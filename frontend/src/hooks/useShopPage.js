@@ -64,6 +64,7 @@ export function useShopPage({ shopId, user, navigate }) {
             x: eq.x,
             y: eq.y,
             z: eq.z || 0,
+            rotation_deg: eq.rotationDeg ?? 0,
           }));
 
         const payload = {
@@ -264,27 +265,24 @@ export function useShopPage({ shopId, user, navigate }) {
     const placements = shop._pendingPlacements;
     shop._pendingPlacements = null; // Clear to avoid re-applying
 
-    for (const placement of placements) {
-      // Find equipment in user's inventory
-      const userEq = userEquipment.find(
-        (eq) => eq.id === placement.equipment_id
-      );
+  for (const placement of placements) {
+    const userEq = userEquipment.find(
+      (eq) => eq.id === placement.equipment_id
+    );
+    if (!userEq) continue;
 
-      if (!userEq) {
-        console.warn(
-          "Equipment not found in user inventory:",
-          placement.equipment_id
-        );
-        continue;
-      }
+    const rotationDeg = placement.rotation_deg ?? 0;
 
-      // Add equipment to shop with saved position
-      shop.addEquipment(
-        { ...userEq, equipment_id: placement.equipment_id },
-        placement.x_coordinate,
-        placement.y_coordinate
-      );
-    }
+    shop.addEquipment(
+      {
+        ...userEq,
+        equipment_id: placement.equipment_id,
+        rotationDeg,  // <--- NEW: passed into Equipment constructor
+      },
+      placement.x_coordinate,
+      placement.y_coordinate
+    );
+  }
 
     setRenderTick((t) => t + 1);
   }, [shop, userEquipment]);

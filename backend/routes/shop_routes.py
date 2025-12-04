@@ -171,10 +171,11 @@ def update_shop_dimensions(shop_id):
                 x = eq_update.get('x')
                 y = eq_update.get('y')
                 z = eq_update.get('z', 0)
+                rotation_deg = eq_update.get('rotation_deg', 0)
 
                 if equipment_id is not None:
                     try:
-                        update_equipment_position(shop_id, equipment_id, x, y, z)
+                        update_equipment_position(shop_id, equipment_id, x, y, z, rotation_deg=rotation_deg)
                     except ValueError as e:
                         # Log the error but don't fail the entire save
                         print(f"Warning: Could not update equipment {equipment_id}: {e}")
