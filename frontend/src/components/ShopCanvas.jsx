@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import EquipmentCrown from "./EquipmentCrown";
-import { drawEquipmentPictogram, drawEquipmentUseArea } from "../utils/equipmentPictograms";
+import {
+  drawEquipmentPictogram,
+  drawEquipmentUseArea,
+} from "../utils/equipmentPictograms";
 import { canPlaceEquipment } from "../utils/collisionUtils";
 
 import "../styles/Canvas.css";
@@ -15,8 +18,9 @@ export default function ShopCanvas({
   onDropEquipment,
   onMoveEquipment,
   onRemoveEquipment, // used for delete
-  rotateSelected,    // passed from parent
-  showUseAreas,      
+  rotateSelected, // passed from parent
+  showUseAreas,
+  draggingEq, // 👈 NEW: equipment being dragged from sidebar
 }) {
   const canvasRef = useRef(null);
 
@@ -27,20 +31,23 @@ export default function ShopCanvas({
     offsetY: 0,
   });
 
-  // Drag state (in shop/feet coordinates)
+  // Drag state (in shop/feet coordinates) for moving existing equipment
   const dragRef = useRef({
     isDragging: false,
     equipmentId: null,
     offsetX: 0, // mouse offset from equipment center (x)
     offsetY: 0, // mouse offset from equipment center (y)
-    startX: 0,  // initial equipment position at drag start
-    startY: 0,  // initial equipment position at drag start
+    startX: 0, // initial equipment position at drag start
+    startY: 0, // initial equipment position at drag start
   });
 
   // Crown position in pixel coordinates (relative to canvas)
   const [crownPos, setCrownPos] = useState(null);
 
-  // --- Drawing logic (auto-fit canvas to workspace, draw grid + equipment) ---
+  // Ghost preview position (in feet) while dragging from sidebar
+  const [dragPreviewPos, setDragPreviewPos] = useState(null);
+
+  // --- Drawing logic (auto-fit canvas to workspace, draw grid + equipment + ghost) ---
   useEffect(() => {
     if (!shop) return;
 
@@ -103,13 +110,13 @@ export default function ShopCanvas({
     }
 
     // --- Dark border around the grid rectangle ---
-    ctx.strokeStyle = "#111";      // dark border color
-    ctx.lineWidth = 2 / scale;     // keep ~constant thickness in screen pixels
+    ctx.strokeStyle = "#111";
+    ctx.lineWidth = 2 / scale;
     ctx.strokeRect(
-      0,          // left edge in feet
-      0,          // top edge in feet
-      shopWidth,  // width in feet
-      shopDepth   // height in feet
+      0, // left edge in feet
+      0, // top edge in feet
+      shopWidth, // width in feet
+      shopDepth // height in feet
     );
 
     // --- Equipment (positions & sizes in feet) ---
@@ -123,11 +130,11 @@ export default function ShopCanvas({
       ctx.translate(x, y);
       ctx.rotate(((eq.rotationDeg || 0) * Math.PI) / 180);
 
-      // 🔹 Use area (dashed outline, same color @ 75% opacity) if toggled
+      // Use area (dashed outline, same color @ 75% opacity) if toggled
       if (showUseAreas) {
         drawEquipmentUseArea(ctx, eq, w, h);
-      }  
-      
+      }
+
       // Body
       ctx.fillStyle = eq.color || "#aaa";
       ctx.fillRect(-w / 2, -h / 2, w, h);
@@ -138,12 +145,38 @@ export default function ShopCanvas({
       ctx.lineWidth = isSelected ? 3 / scale : 1 / scale;
       ctx.strokeRect(-w / 2, -h / 2, w, h);
 
-        // 🔹 pictogram:
+      // pictogram
       drawEquipmentPictogram(ctx, eq, w, h);
-      
-
 
       ctx.restore();
+    }
+
+    // --- Ghost preview for equipment being dragged from sidebar ---
+    if (draggingEq && dragPreviewPos) {
+      const w = draggingEq.widthFt;
+      const h = draggingEq.depthFt;
+      const { x, y } = dragPreviewPos;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(((draggingEq.rotationDeg || 0) * Math.PI) / 180);
+
+      if (showUseAreas) {
+        drawEquipmentUseArea(ctx, draggingEq, w, h);
+      }
+
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = draggingEq.color || "#888";
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+      ctx.strokeStyle = "#555";
+      ctx.lineWidth = 1 / scale;
+      ctx.strokeRect(-w / 2, -h / 2, w, h);
+
+      // If you want pictogram instead of plain rectangle, you can also do:
+      // drawEquipmentPictogram(ctx, draggingEq, w, h);
+
+      ctx.restore();
+      ctx.globalAlpha = 1.0;
     }
 
     ctx.restore();
@@ -224,7 +257,7 @@ export default function ShopCanvas({
     } else {
       setCrownPos(null);
     }
-  }, [shop, selectedId, renderTick, showUseAreas]);
+  }, [shop, selectedId, renderTick, showUseAreas, draggingEq, dragPreviewPos]);
 
   // --- Helpers: coords & hit-testing ---
 
@@ -267,6 +300,12 @@ export default function ShopCanvas({
 
   function handleDragOver(e) {
     e.preventDefault();
+    if (!draggingEq) return;
+
+    const coords = getShopCoordsFromEvent(e);
+    if (!coords) return;
+
+    setDragPreviewPos(coords);
   }
 
   function handleDrop(e) {
@@ -281,41 +320,43 @@ export default function ShopCanvas({
     if (!coords) return;
 
     onDropEquipment?.(eqConfig, coords.x, coords.y);
+
+    // clear ghost after drop
+    setDragPreviewPos(null);
   }
 
-function handleMouseDown(e) {
-  if (!shop) return;
-  e.preventDefault();
+  function handleMouseDown(e) {
+    if (!shop) return;
+    e.preventDefault();
 
-  const coords = getShopCoordsFromEvent(e);
-  if (!coords) return;
+    const coords = getShopCoordsFromEvent(e);
+    if (!coords) return;
 
-  const eq = findEquipmentAtPosition(coords.x, coords.y);
+    const eq = findEquipmentAtPosition(coords.x, coords.y);
 
-  if (eq) {
-    onSelectEquipment?.(eq.id);
+    if (eq) {
+      onSelectEquipment?.(eq.id);
 
-    dragRef.current = {
-      isDragging: true,
-      equipmentId: eq.id,
-      offsetX: coords.x - eq.x,
-      offsetY: coords.y - eq.y,
-      startX: eq.x,          // 👈 remember where we started
-      startY: eq.y,
-    };
-  } else {
-    onSelectEquipment?.(null);
-    dragRef.current = {
-      isDragging: false,
-      equipmentId: null,
-      offsetX: 0,
-      offsetY: 0,
-      startX: null,
-      startY: null,
-    };
+      dragRef.current = {
+        isDragging: true,
+        equipmentId: eq.id,
+        offsetX: coords.x - eq.x,
+        offsetY: coords.y - eq.y,
+        startX: eq.x, // remember where we started
+        startY: eq.y,
+      };
+    } else {
+      onSelectEquipment?.(null);
+      dragRef.current = {
+        isDragging: false,
+        equipmentId: null,
+        offsetX: 0,
+        offsetY: 0,
+        startX: null,
+        startY: null,
+      };
+    }
   }
-}
-
 
   function handleMouseMove(e) {
     const dragState = dragRef.current;
@@ -330,45 +371,46 @@ function handleMouseDown(e) {
     onMoveEquipment?.(dragState.equipmentId, newX, newY);
   }
 
-function handleMouseUp() {
-  const dragState = dragRef.current;
-  if (!shop || !dragState.equipmentId) {
-    dragRef.current.isDragging = false;
-    dragRef.current.equipmentId = null;
-    return;
-  }
+  function handleMouseUp() {
+    const dragState = dragRef.current;
+    if (!shop || !dragState.equipmentId) {
+      dragRef.current.isDragging = false;
+      dragRef.current.equipmentId = null;
+      setDragPreviewPos(null);
+      return;
+    }
 
-  const id = dragState.equipmentId;
+    const id = dragState.equipmentId;
 
-  // Get the final equipment state
-  const eq = shop.getEquipmentById
-    ? shop.getEquipmentById(id)
-    : shop.equipment_list.find((e) => e.id === id);
+    // Get the final equipment state
+    const eq = shop.getEquipmentById
+      ? shop.getEquipmentById(id)
+      : shop.equipment_list.find((e) => e.id === id);
 
-  if (eq) {
-    const finalX = eq.x;
-    const finalY = eq.y;
+    if (eq) {
+      const finalX = eq.x;
+      const finalY = eq.y;
 
-    // If this final position overlaps others → revert
-    if (!canPlaceEquipment(shop, eq, finalX, finalY, id)) {
-      const { startX, startY } = dragState;
-      if (startX != null && startY != null) {
-        onMoveEquipment?.(id, startX, startY);
+      // If this final position overlaps others → revert
+      if (!canPlaceEquipment(shop, eq, finalX, finalY, id)) {
+        const { startX, startY } = dragState;
+        if (startX != null && startY != null) {
+          onMoveEquipment?.(id, startX, startY);
+        }
       }
     }
+
+    // Clear drag state & ghost
+    dragRef.current = {
+      isDragging: false,
+      equipmentId: null,
+      offsetX: 0,
+      offsetY: 0,
+      startX: null,
+      startY: null,
+    };
+    setDragPreviewPos(null);
   }
-
-  // Clear drag state
-  dragRef.current = {
-    isDragging: false,
-    equipmentId: null,
-    offsetX: 0,
-    offsetY: 0,
-    startX: null,
-    startY: null,
-  };
-}
-
 
   // Optional: wrapper to call delete with actual eq object
   function handleDeleteSelected() {
