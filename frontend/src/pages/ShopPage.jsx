@@ -23,8 +23,8 @@ export default function ShopPage({ user }) {
     shopForm,
     gridSizeFt,
     showUseAreas,
+    draggingEq,          // 👈 NEW: drag ghost state
     toggleShowUseAreas,
-    setShowUseAreas,
     handleShopFormChange,
     handleDragStart,
     handleDropEquipment,
@@ -33,7 +33,7 @@ export default function ShopPage({ user }) {
     handleDeleteEquipment,
     rotateSelected,
     handleCloseDetailsPanel,
-    handleGridSizeChange
+    handleGridSizeChange,
   } = useShopPage({ shopId, user, navigate });
 
   if (loading) {
@@ -92,6 +92,7 @@ export default function ShopPage({ user }) {
           onRemoveEquipment={handleDeleteEquipment}
           rotateSelected={rotateSelected}
           showUseAreas={showUseAreas}
+          draggingEq={draggingEq}   
         />
       </section>
 

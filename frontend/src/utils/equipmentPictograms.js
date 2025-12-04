@@ -357,7 +357,7 @@ function drawGenericMachineTop(ctx, w, h) {
 // w, h are tool width/depth in feet.
 // Draw dashed "use area" around the tool footprint in *local* (rotated) coords.
 // w, h are tool width/depth in feet.
-export function drawEquipmentUseArea(ctx, eq, w, h) {
+export function getEquipmentUseAreaRect(eq, w, h) {
   const name = (eq.name || "").toLowerCase();
   const model = (eq.model || "").toLowerCase();
 
@@ -375,49 +375,51 @@ export function drawEquipmentUseArea(ctx, eq, w, h) {
     hasArea = true;
   };
 
-  // --- clearance rules (same as before) ---
+  // --- clearance rules (same as your existing code) ---
   if (name.includes("table saw") || model.includes("pcs31230")) {
     // 8 ft left & right
     setArea(8, 8, 0, 0);
-
   } else if (name.includes("planer") || model.includes("dw735")) {
     // 6 ft top & bottom
     setArea(0, 0, 6, 6);
-
   } else if (name.includes("drill press") || model.includes("18-900l")) {
     setArea(0, 0, 0, 2);
-
   } else if (name.includes("jointer") || model.includes("jwj-8cs")) {
     setArea(2, 0, 6, 6);
-
   } else if (
     name.includes("belt/disc") ||
     (name.includes("belt") && name.includes("sander")) ||
     model.includes("31-735")
   ) {
     setArea(2, 0, 0, 2);
-
   } else if (
     name.includes("band saw") ||
     name.includes("bandsaw") ||
     model.includes("pm1500")
   ) {
     setArea(0, 0, 4, 4);
-
   } else if (name.includes("cnc") || model.includes("c-103")) {
     setArea(2, 2, 2, 2);
-
   } else {
     hasArea = false;
   }
 
-  if (!hasArea) return;
+  if (!hasArea) return null;
+  return { areaX, areaY, areaW, areaH };
+}
+
+export function drawEquipmentUseArea(ctx, eq, w, h) {
+  const rect = getEquipmentUseAreaRect(eq, w, h);
+  if (!rect) return;
+
+  const { areaX, areaY, areaW, areaH } = rect;
 
   ctx.save();
 
   // 🔹 Semi-transparent colored fill (based on eq.color)
   const fillColor = hexToRgba(eq.color || "#888", 0.25); // 25% alpha
   ctx.fillStyle = fillColor;
+
   ctx.beginPath();
   ctx.rect(areaX, areaY, areaW, areaH);
   ctx.fill();
@@ -433,10 +435,6 @@ export function drawEquipmentUseArea(ctx, eq, w, h) {
   ctx.setLineDash([]);
   ctx.restore();
 }
-
-
-
-
 
 export function drawEquipmentPictogram(ctx, eq, w, h) {
   const name = (eq.name || "").toLowerCase();

@@ -28,9 +28,6 @@ export function useShopPage({ shopId, user, navigate }) {
   const [showUseAreas, setShowUseAreas] = useState(false);
   const [draggingEq, setDraggingEq] = useState(null);
 
-
-
-
   // Form state for shop meta (name + dimensions)
   const [shopForm, setShopForm] = useState({
     name: "",
@@ -39,7 +36,7 @@ export function useShopPage({ shopId, user, navigate }) {
     height: 10,
   });
 
-  // Save state (now used for autosave status)
+  // Save state (for autosave status)
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -61,12 +58,13 @@ export function useShopPage({ shopId, user, navigate }) {
         // Gather all equipment positions from the shop
         // Use equipmentDbId (the actual user_equipment.id) not the local canvas id
         const equipment_positions = shopToSave.equipment_list
-          .filter((eq) => eq.equipmentDbId) // Only include equipment that has a DB ID
+          .filter((eq) => eq.equipmentDbId)
           .map((eq) => ({
             equipment_id: eq.equipmentDbId,
             x: eq.x,
             y: eq.y,
             z: eq.z || 0,
+            rotation_deg: eq.rotationDeg ?? 0,
           }));
 
         const payload = {
@@ -267,27 +265,24 @@ export function useShopPage({ shopId, user, navigate }) {
     const placements = shop._pendingPlacements;
     shop._pendingPlacements = null; // Clear to avoid re-applying
 
-    for (const placement of placements) {
-      // Find equipment in user's inventory
-      const userEq = userEquipment.find(
-        (eq) => eq.id === placement.equipment_id
-      );
+  for (const placement of placements) {
+    const userEq = userEquipment.find(
+      (eq) => eq.id === placement.equipment_id
+    );
+    if (!userEq) continue;
 
-      if (!userEq) {
-        console.warn(
-          "Equipment not found in user inventory:",
-          placement.equipment_id
-        );
-        continue;
-      }
+    const rotationDeg = placement.rotation_deg ?? 0;
 
-      // Add equipment to shop with saved position
-      shop.addEquipment(
-        { ...userEq, equipment_id: placement.equipment_id },
-        placement.x_coordinate,
-        placement.y_coordinate
-      );
-    }
+    shop.addEquipment(
+      {
+        ...userEq,
+        equipment_id: placement.equipment_id,
+        rotationDeg,  // <--- NEW: passed into Equipment constructor
+      },
+      placement.x_coordinate,
+      placement.y_coordinate
+    );
+  }
 
     setRenderTick((t) => t + 1);
   }, [shop, userEquipment]);
@@ -308,7 +303,7 @@ export function useShopPage({ shopId, user, navigate }) {
 
   // --- UI handlers ---
   function toggleShowUseAreas() {
-    setShowUseAreas(v => !v);
+    setShowUseAreas((v) => !v);
   }
 
   function handleShopFormChange(e) {
@@ -324,6 +319,7 @@ export function useShopPage({ shopId, user, navigate }) {
 
   function handleDragStart(e, eq) {
     e.dataTransfer.setData("application/json", JSON.stringify(eq));
+    setDraggingEq(eq); // used for ghost preview on canvas
   }
 
   // Add equipment: backend saves immediately; canvas uses normalized position
@@ -352,7 +348,6 @@ export function useShopPage({ shopId, user, navigate }) {
         console.error("No user logged in");
         return;
       }
-
 
       // 1. Add equipment to user's inventory
       const userEquipmentResponse = await addEquipmentToUser(activeUser.id, {
@@ -383,31 +378,31 @@ export function useShopPage({ shopId, user, navigate }) {
       console.log("Equipment count in shop:", shop.equipment_list.length);
 
       setRenderTick((t) => t + 1);
+      setDraggingEq(null); // 👈 clear ghost after successful drop
     } catch (err) {
       console.error("Failed to save placement:", err);
     }
   }
 
   // Move equipment: normalize, update Shop, schedule autosave
- function handleMoveEquipment(id, newX, newY) {
-  if (!shop) return;
+  function handleMoveEquipment(id, newX, newY) {
+    if (!shop) return;
 
-  const eq = shop.getEquipmentById
-    ? shop.getEquipmentById(id)
-    : shop.equipment_list.find((e) => e.id === id);
+    const eq = shop.getEquipmentById
+      ? shop.getEquipmentById(id)
+      : shop.equipment_list.find((e) => e.id === id);
 
-  if (!eq) return;
+    if (!eq) return;
 
-  // Snap & clamp while dragging (rotation-aware)
-  const { x, y } = normalizePosition(newX, newY, shop, gridSizeFt, eq);
+    // Snap & clamp while dragging (rotation-aware)
+    const { x, y } = normalizePosition(newX, newY, shop, gridSizeFt, eq);
 
-  shop.moveEquipment(id, x, y);
-  setRenderTick((t) => t + 1);
+    shop.moveEquipment(id, x, y);
+    setRenderTick((t) => t + 1);
 
-  // Debounced autosave of positions
-  scheduleAutosave(shop);
-}
-
+    // Debounced autosave of positions
+    scheduleAutosave(shop);
+  }
 
   function handleSelectEquipment(id) {
     setSelectedId(id);
@@ -416,8 +411,6 @@ export function useShopPage({ shopId, user, navigate }) {
 
   async function handleDeleteEquipment(equipment) {
     if (!shop || !equipment) return;
-
-
 
     try {
       // 1. Remove from in-memory model first (optimistic update)
@@ -463,13 +456,7 @@ export function useShopPage({ shopId, user, navigate }) {
       : (eq.rotationDeg = (eq.rotationDeg || 0) + delta);
 
     // After rotation, clamp/normalize so footprint stays inside shop
-    const { x, y } = normalizePosition(
-      eq.x,
-      eq.y,
-      shop,
-      gridSizeFt,
-      eq
-    );
+    const { x, y } = normalizePosition(eq.x, eq.y, shop, gridSizeFt, eq);
     eq.x = x;
     eq.y = y;
 
@@ -507,11 +494,14 @@ export function useShopPage({ shopId, user, navigate }) {
     gridSizeFt,
     showUseAreas,
     draggingEq,
+
     // toggles
     toggleShowUseAreas,
+
     // setters
     setShowUseAreas,
     setDraggingEq,
+
     // handlers
     handleShopFormChange,
     handleDragStart,
