@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS equipment_types (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     color TEXT DEFAULT '#aaa',
     manufacturer TEXT,
-    model TEXT
+    model TEXT,
+    image_path TEXT
 );
 
 -- Actual equipment that users own

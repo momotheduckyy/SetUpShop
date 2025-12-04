@@ -37,13 +37,13 @@ def seed_database():
     # Add equipment types if catalog is empty
     # Dimensions are in inches (width, height, depth)
     if not get_equipment_catalog():
-        add_equipment_type("Table Saw", '10" cabinet saw with 3 HP motor, 52" T-Glide fence, and SawStop safety brake.', 33.00, 34.00, 85.25, 30, "#f99", "SawStop", "PCS31230-TGP252")
-        add_equipment_type("Band Saw", '15" bandsaw with 3 HP motor and 14" resaw capacity.', 34.38, 80.25, 30.25, 30, "#9f9", "Powermatic", "PM1500")
-        add_equipment_type("Planer", 'Portable 13" planer with fan-assisted chip ejection and two-speed gearbox (96/179 CPI).', 22.00, 18.75, 22.00, 7, "#99f", "DeWALT", "DW735")
-        add_equipment_type("Belt/Disc Sander", 'Combo sander with tilting belt and disc tables; dust port selector.', 36.00, 36.00, 36.00, 7, "#ff9", "Delta", "31-735")
-        add_equipment_type("CNC Router", 'Heavy-duty 3-axis CNC router with 50" × 100" working area and 4 HP spindle.', 71, 54, 155, 30, "#cc0", "MultiCam", "Classic C-103")
-        add_equipment_type("Drill Press", '16-speed drill press with 0.75 HP motor and tilting cast-iron table.', 20, 70, 28, 30, "#0cc", "DELTA", "18-900L")
-        add_equipment_type("Jointer", '8" jointer with 72" tables, 2 HP motor, and straight-knife cutterhead.', 25.625, 45.25, 70.875, 30, "#ccc", "JET", "JWJ-8CS")
+        add_equipment_type("Table Saw", '10" cabinet saw with 3 HP motor, 52" T-Glide fence, and SawStop safety brake.', 33.00, 34.00, 85.25, 30, "#f99", "SawStop", "PCS31230-TGP252", "Sawstop Tablesaw.jpeg")
+        add_equipment_type("Band Saw", '15" bandsaw with 3 HP motor and 14" resaw capacity.', 34.38, 80.25, 30.25, 30, "#9f9", "Powermatic", "PM1500", "Powermatic band Saw.jpeg")
+        add_equipment_type("Planer", 'Portable 13" planer with fan-assisted chip ejection and two-speed gearbox (96/179 CPI).', 22.00, 18.75, 22.00, 7, "#99f", "DeWALT", "DW735", "dewalt Planer.jpeg")
+        add_equipment_type("Belt/Disc Sander", 'Combo sander with tilting belt and disc tables; dust port selector.', 36.00, 36.00, 36.00, 7, "#ff9", "Delta", "31-735", "Delta Combo Sander.jpeg")
+        add_equipment_type("CNC Router", 'Heavy-duty 3-axis CNC router with 50" × 100" working area and 4 HP spindle.', 71, 54, 155, 30, "#cc0", "MultiCam", "Classic C-103", "MultiCAM Classic.jpeg")
+        add_equipment_type("Drill Press", '16-speed drill press with 0.75 HP motor and tilting cast-iron table.', 20, 70, 28, 30, "#0cc", "DELTA", "18-900L", "Delta Drill Press.jpeg")
+        add_equipment_type("Jointer", '8" jointer with 72" tables, 2 HP motor, and straight-knife cutterhead.', 25.625, 45.25, 70.875, 30, "#ccc", "JET", "JWJ-8CS", "jet jointer.jpeg")
 
         # Add equipment to users
     today = date.today()

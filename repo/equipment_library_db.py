@@ -65,13 +65,13 @@ def get_equipment_type_by_id(equipment_type_id):
         equipment = cursor.fetchone()
         return _row_to_dict(equipment)
 
-def add_equipment_type(equipment_name, description, width, height, depth, maintenance_interval_days, color='#aaa', manufacturer=None, model=None):
+def add_equipment_type(equipment_name, description, width, height, depth, maintenance_interval_days, color='#aaa', manufacturer=None, model=None, image_path=None):
     """Add new equipment type to catalog (for admin use)"""
     with _connect() as conn:
         cursor = conn.execute(
-            """INSERT INTO equipment_types (equipment_name, description, width, height, depth, maintenance_interval_days, color, manufacturer, model)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (equipment_name, description, width, height, depth, maintenance_interval_days, color, manufacturer, model)
+            """INSERT INTO equipment_types (equipment_name, description, width, height, depth, maintenance_interval_days, color, manufacturer, model, image_path)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (equipment_name, description, width, height, depth, maintenance_interval_days, color, manufacturer, model, image_path)
         )
         conn.commit()
         equipment_type_id = cursor.lastrowid
