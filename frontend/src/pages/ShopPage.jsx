@@ -10,6 +10,7 @@ import { useShopPage } from "../hooks/useShopPage";
 export default function ShopPage({ user }) {
   const { shopId } = useParams();
   const navigate = useNavigate();
+  
 
   const {
     shop,
@@ -23,7 +24,7 @@ export default function ShopPage({ user }) {
     shopForm,
     gridSizeFt,
     showUseAreas,
-    draggingEq,          // 👈 NEW: drag ghost state
+    draggingEq,        
     toggleShowUseAreas,
     handleShopFormChange,
     handleDragStart,
