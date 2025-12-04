@@ -57,6 +57,11 @@ export default function EquipmentCatalog() {
         ) : (
           items.map((it) => (
             <div key={it.id} className="eqp-card">
+              <img
+                src={`/equipment-images/${it.image_path}`}
+                alt={it.equipment_name}
+                className="eqp-image"
+              />
               <h3>{it.equipment_name}</h3>
               <p>{it.description}</p>
 
