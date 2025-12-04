@@ -37,29 +37,30 @@ def seed_database():
     # Add equipment types if catalog is empty
     # Dimensions are in inches (width, height, depth)
     if not get_equipment_catalog():
-        add_equipment_type("Table Saw", "Professional table saw", 36, 36, 36, 90, "#f99", "DeWalt", "DW745")
-        add_equipment_type("Band Saw", "14-inch band saw", 24, 48, 24, 180, "#9f9", "Grizzly", "G0555")
-        add_equipment_type("Jointer", "8-inch jointer", 72, 36, 24, 120, "#99f", "Jet", "JJ-8")
-        add_equipment_type("Planer", "13-inch thickness planer", 36, 24, 24, 60, "#ff9", "DeWalt", "DW735")
-        add_equipment_type("Air Compressor", "60-gallon air compressor", 120, 60, 80, 365, "#aaa", "Quincy", "QT-54")
-        add_equipment_type("Milling Machine", "Vertical milling machine", 200, 72, 150, 90, "#aaa", "Bridgeport", "Series I")
-        add_equipment_type("Grinder", "8-inch bench grinder", 50, 12, 40, 180, "#aaa", "Baldor", "8120W")
-    
-    # Add equipment to users
+        add_equipment_type("Table Saw", '10" cabinet saw with 3 HP motor, 52" T-Glide fence, and SawStop safety brake.', 33.00, 34.00, 85.25, 30, "#f99", "SawStop", "PCS31230-TGP252")
+        add_equipment_type("Band Saw", '15" bandsaw with 3 HP motor and 14" resaw capacity.', 34.38, 80.25, 30.25, 30, "#9f9", "Powermatic", "PM1500")
+        add_equipment_type("Planer", 'Portable 13" planer with fan-assisted chip ejection and two-speed gearbox (96/179 CPI).', 22.00, 18.75, 22.00, 7, "#99f", "DeWALT", "DW735")
+        add_equipment_type("Belt/Disc Sander", 'Combo sander with tilting belt and disc tables; dust port selector.', 36.00, 36.00, 36.00, 7, "#ff9", "Delta", "31-735")
+        add_equipment_type("CNC Router", 'Heavy-duty 3-axis CNC router with 50" × 100" working area and 4 HP spindle.', 71, 54, 155, 30, "#cc0", "MultiCam", "Classic C-103")
+        add_equipment_type("Drill Press", '16-speed drill press with 0.75 HP motor and tilting cast-iron table.', 20, 70, 28, 30, "#0cc", "DELTA", "18-900L")
+        add_equipment_type("Jointer", '8" jointer with 72" tables, 2 HP motor, and straight-knife cutterhead.', 25.625, 45.25, 70.875, 30, "#ccc", "JET", "JWJ-8CS")
+
+        # Add equipment to users
     today = date.today()
     
     # John's equipment
-    eq1 = add_equipment_to_user(users[0]['id'], 2, "Primary lathe", (today - timedelta(days=365)).isoformat())
-    eq2 = add_equipment_to_user(users[0]['id'], 3, "Drill press", (today - timedelta(days=180)).isoformat())
+    eq1 = add_equipment_to_user(users[0]['id'], 2, "Primary bandsaw for resawing and curve cuts", (today - timedelta(days=365)).isoformat())
+    eq2 = add_equipment_to_user(users[0]['id'], 3, "Thickness planer for milling rough stock", (today - timedelta(days=180)).isoformat())
     
     # Mary's equipment
-    eq3 = add_equipment_to_user(users[1]['id'], 1, "Heat treatment oven", (today - timedelta(days=730)).isoformat())
-    eq4 = add_equipment_to_user(users[1]['id'], 4, "Welding station", (today - timedelta(days=200)).isoformat())
+    eq3 = add_equipment_to_user(users[1]['id'], 1, "Primary cabinet table saw with 52\" fence", (today - timedelta(days=730)).isoformat())
+    eq4 = add_equipment_to_user(users[1]['id'], 4, "Combination belt/disc sander for edge sanding and cleanup", (today - timedelta(days=200)).isoformat())
     
     # Bob's equipment
-    eq5 = add_equipment_to_user(users[2]['id'], 2, "Large lathe", (today - timedelta(days=400)).isoformat())
-    eq6 = add_equipment_to_user(users[2]['id'], 3, "Floor drill press", (today - timedelta(days=150)).isoformat())
-    
+    eq5 = add_equipment_to_user(users[2]['id'], 2, "Large bandsaw set up for general shop use", (today - timedelta(days=400)).isoformat())
+    eq6 = add_equipment_to_user(users[2]['id'], 6, "Floor drill press for accurate hole drilling", (today - timedelta(days=150)).isoformat())
+
+
     # Perform maintenance on some equipment
     perform_maintenance(eq1['id'], (today - timedelta(days=3)).isoformat())
     perform_maintenance(eq3['id'], (today - timedelta(days=365)).isoformat())

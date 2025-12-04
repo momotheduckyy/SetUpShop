@@ -18,6 +18,8 @@ export default function ShopSidebar({
   isSaving,
   saveError,
   saveSuccess,
+  gridSizeFt,
+  onGridSizeChange,
 }) {
   return (
     <aside className="shop-sidebar">
@@ -54,6 +56,22 @@ export default function ShopSidebar({
         )}
       </div>
 
+      <section className="sidebar-section">
+        <h3 className="sidebar-section-title">Grid Size</h3>
+        <label className="sidebar-label" htmlFor="grid-size-select">
+          Snap equipment to:
+        </label>
+        <select
+          id="grid-size-select"
+          className="sidebar-select"
+          value={gridSizeFt}
+          onChange={(e) => onGridSizeChange?.(parseFloat(e.target.value))}
+        >
+          <option value={0.25}>(0.25 ft)</option>
+          <option value={0.5}>(0.5 ft)</option>
+          <option value={1}>(1 ft)</option>
+        </select>
+      </section>
 
       {/* Save & Return */}
       <div className="shop-save-row">
