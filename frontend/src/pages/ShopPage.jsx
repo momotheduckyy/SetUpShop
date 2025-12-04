@@ -19,14 +19,12 @@ export default function ShopPage({ user }) {
     renderTick,
     loading,
     errorMsg,
-    isEditing,
     isDetailsOpen,
     shopForm,
-    isSaving,
-    saveError,
-    saveSuccess,
     gridSizeFt,
-    toggleEditing,
+    showUseAreas,
+    toggleShowUseAreas,
+    setShowUseAreas,
     handleShopFormChange,
     handleDragStart,
     handleDropEquipment,
@@ -34,7 +32,6 @@ export default function ShopPage({ user }) {
     handleSelectEquipment,
     handleDeleteEquipment,
     rotateSelected,
-    handleSaveAndReturn,
     handleCloseDetailsPanel,
     handleGridSizeChange
   } = useShopPage({ shopId, user, navigate });
@@ -74,21 +71,14 @@ export default function ShopPage({ user }) {
 
       <ShopSidebar
         shop={shop}
-        shopId={shopId}
-        equipmentCatalog={equipmentCatalog}
-        onDragStart={handleDragStart}
-        selectedEq={selectedEq}
-        rotateSelected={rotateSelected}
-        isEditing={isEditing}
-        toggleEditing={toggleEditing}
         shopForm={shopForm}
-        onShopFormChange={handleShopFormChange}
-        onSaveAndReturn={handleSaveAndReturn}
-        isSaving={isSaving}
-        saveError={saveError}
-        saveSuccess={saveSuccess}
         gridSizeFt={gridSizeFt}
+        equipmentCatalog={equipmentCatalog}
+        onShopFormChange={handleShopFormChange}
         onGridSizeChange={handleGridSizeChange}
+        onDragStart={handleDragStart}
+        showUseAreas={showUseAreas}
+        onToggleUseAreas={toggleShowUseAreas}
       />
 
       <section className="shop-workspace">
@@ -100,6 +90,8 @@ export default function ShopPage({ user }) {
           onDropEquipment={handleDropEquipment}
           onMoveEquipment={handleMoveEquipment}
           onRemoveEquipment={handleDeleteEquipment}
+          rotateSelected={rotateSelected}
+          showUseAreas={showUseAreas}
         />
       </section>
 

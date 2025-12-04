@@ -1,6 +1,6 @@
 // frontend/src/hooks/useShopPage.js
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import { Shop } from "../lib/models/Shop";
 import {
@@ -12,6 +12,7 @@ import {
   removeEquipmentFromShop,
 } from "../services/api";
 import { normalizePosition } from "../utils/shopLayoutUtils";
+import { canPlaceEquipment } from "../utils/collisionUtils";
 
 const API_BASE = "http://localhost:5001/api";
 
@@ -23,8 +24,12 @@ export function useShopPage({ shopId, user, navigate }) {
   const [renderTick, setRenderTick] = useState(0);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [showUseAreas, setShowUseAreas] = useState(false);
+  const [draggingEq, setDraggingEq] = useState(null);
+
+
+
 
   // Form state for shop meta (name + dimensions)
   const [shopForm, setShopForm] = useState({
@@ -34,12 +39,96 @@ export function useShopPage({ shopId, user, navigate }) {
     height: 10,
   });
 
-  // Save state (for the Save button)
+  // Save state (now used for autosave status)
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+
   const [gridSizeFt, setGridSizeFt] = useState(0.5);
 
+  // Debounce timer for autosave
+  const autosaveTimerRef = useRef(null);
+
+  // --- Core save logic reused for autosave ---
+  const doAutosave = useCallback(
+    async (shopToSave) => {
+      if (!shopToSave) return;
+      try {
+        setIsSaving(true);
+        setSaveError("");
+        setSaveSuccess(false);
+
+        // Gather all equipment positions from the shop
+        // Use equipmentDbId (the actual user_equipment.id) not the local canvas id
+        const equipment_positions = shopToSave.equipment_list
+          .filter((eq) => eq.equipmentDbId) // Only include equipment that has a DB ID
+          .map((eq) => ({
+            equipment_id: eq.equipmentDbId,
+            x: eq.x,
+            y: eq.y,
+            z: eq.z || 0,
+          }));
+
+        const payload = {
+          shop_name: shopForm.name,
+          length: shopForm.length,
+          width: shopForm.width,
+          height: shopForm.height,
+          equipment_positions,
+        };
+
+        const res = await axios.put(`${API_BASE}/shops/${shopId}`, payload);
+        const updated = res.data.shop;
+
+        // Sync with returned values (optional safety)
+        if (updated) {
+          const length = updated.length ?? shopForm.length;
+          const width = updated.width ?? shopForm.width;
+          const height = updated.height ?? shopForm.height;
+
+          if (shop) {
+            shop.depthFt = length;
+            shop.widthFt = width;
+          }
+
+          setShopForm({ name: shopForm.name, length, width, height });
+          setRenderTick((t) => t + 1);
+        }
+
+        setSaveSuccess(true);
+      } catch (err) {
+        console.error("Failed to autosave shop:", err);
+        setSaveError(err.response?.data?.error || "Failed to save shop.");
+        setSaveSuccess(false);
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [shopId, shopForm.name, shopForm.length, shopForm.width, shopForm.height, shop]
+  );
+
+  // Debounced autosave: wait a bit after the last change
+  const scheduleAutosave = useCallback(
+    (shopToSave) => {
+      if (!shopToSave) return;
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+      autosaveTimerRef.current = setTimeout(() => {
+        doAutosave(shopToSave);
+      }, 400); // ms after last move/rotate
+    },
+    [doAutosave]
+  );
+
+  // Clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, []);
 
   // --- Load shop from backend ---
   useEffect(() => {
@@ -77,8 +166,6 @@ export function useShopPage({ shopId, user, navigate }) {
         const shopInstance = new Shop(name, width, length, 10);
 
         // Load equipment placements from shop
-        // Note: This runs before userEquipment is loaded, so we'll store placements
-        // and apply them after equipment loads
         if (Array.isArray(data.equipment)) {
           // Store placements to apply after user equipment loads
           shopInstance._pendingPlacements = data.equipment;
@@ -124,7 +211,7 @@ export function useShopPage({ shopId, user, navigate }) {
         const transformedEquipment = equipment.map((eq) => ({
           id: eq.id, // equipment_types.id
           name: eq.equipment_name,
-          widthFt: eq.width / 12, // Convert inches to feet
+          widthFt: eq.width / 12, // inches -> feet
           depthFt: eq.depth / 12,
           color: eq.color || "#aaa",
           manufacturer: eq.manufacturer || "",
@@ -154,8 +241,8 @@ export function useShopPage({ shopId, user, navigate }) {
         const transformedEquipment = equipment.map((eq) => ({
           id: eq.id, // user_equipment.id
           name: eq.equipment_name,
-          widthFt: eq.width / 12, // Convert inches to feet
-          depthFt: eq.depth / 12, // Convert inches to feet
+          widthFt: eq.width / 12, // inches -> feet
+          depthFt: eq.depth / 12,
           color: eq.color || "#aaa",
           manufacturer: eq.manufacturer || "",
           model: eq.model || "",
@@ -195,7 +282,6 @@ export function useShopPage({ shopId, user, navigate }) {
       }
 
       // Add equipment to shop with saved position
-      // Make sure to pass equipment_id so equipmentDbId gets set correctly
       shop.addEquipment(
         { ...userEq, equipment_id: placement.equipment_id },
         placement.x_coordinate,
@@ -210,20 +296,19 @@ export function useShopPage({ shopId, user, navigate }) {
   useEffect(() => {
     if (!shop) return;
 
-    // To stay consistent with how Shop(name, length, width, 10) is constructed, we map:
+    // Shop(name, widthFt, depthFt, 10) =>
     //  - shop.depthFt = length
     //  - shop.widthFt = width
     shop.depthFt = shopForm.length;
     shop.widthFt = shopForm.width;
-    // height not used in 2D canvas yet, but we keep it in form for future.
+    // height not used in 2D canvas yet, but kept in form
 
     setRenderTick((t) => t + 1);
   }, [shop, shopForm.length, shopForm.width]);
 
-  // --- Simple UI helpers / handlers ---
-
-  function toggleEditing() {
-    setIsEditing((prev) => !prev);
+  // --- UI handlers ---
+  function toggleShowUseAreas() {
+    setShowUseAreas(v => !v);
   }
 
   function handleShopFormChange(e) {
@@ -241,13 +326,24 @@ export function useShopPage({ shopId, user, navigate }) {
     e.dataTransfer.setData("application/json", JSON.stringify(eq));
   }
 
+  // Add equipment: backend saves immediately; canvas uses normalized position
   async function handleDropEquipment(eqConfig, x, y) {
     if (!shop) return;
 
-    // Snap & clamp the drop location to the shop grid
-    const { x: normX, y: normY } = normalizePosition(x, y, shop, gridSizeFt);
+    // Snap & clamp the drop location to the shop grid (use eqConfig for size)
+    const { x: normX, y: normY } = normalizePosition(
+      x,
+      y,
+      shop,
+      gridSizeFt,
+      eqConfig
+    );
 
-    // 1) Persist to backend first - add equipment to user inventory
+    if (!canPlaceEquipment(shop, eqConfig, normX, normY, null)) {
+      alert("That placement overlaps another tool. Try a different spot.");
+      return;
+    }
+
     try {
       const storedUser = JSON.parse(localStorage.getItem("user"));
       const activeUser = user && user.id ? user : storedUser;
@@ -257,14 +353,14 @@ export function useShopPage({ shopId, user, navigate }) {
         return;
       }
 
-      // First, add equipment to user's inventory
+
+      // 1. Add equipment to user's inventory
       const userEquipmentResponse = await addEquipmentToUser(activeUser.id, {
         equipment_type_id: eqConfig.id, // equipment_types.id
         notes: "",
         purchase_date: new Date().toISOString().split("T")[0],
       });
 
-      // Get the newly created user_equipment.id
       const userEquipmentId = userEquipmentResponse.equipment?.id;
 
       if (!userEquipmentId) {
@@ -272,7 +368,7 @@ export function useShopPage({ shopId, user, navigate }) {
         return;
       }
 
-      // Now add to shop using the user_equipment.id
+      // 2. Add placement to shop in backend
       await addEquipmentToShop(shopId, {
         equipmentId: userEquipmentId,
         x: normX,
@@ -280,8 +376,7 @@ export function useShopPage({ shopId, user, navigate }) {
         z: 0,
       });
 
-      // Update local state with the new user_equipment.id
-      // Pass as equipment_id so Shop model stores it in equipmentDbId
+      // 3. Update local state with the new user_equipment.id
       const placedEquipment = { ...eqConfig, equipment_id: userEquipmentId };
       shop.addEquipment(placedEquipment, normX, normY);
       console.log("Locally placed equipment with DB ID:", userEquipmentId);
@@ -293,28 +388,36 @@ export function useShopPage({ shopId, user, navigate }) {
     }
   }
 
-  function handleMoveEquipment(id, newX, newY) {
-    if (!shop) return;
+  // Move equipment: normalize, update Shop, schedule autosave
+ function handleMoveEquipment(id, newX, newY) {
+  if (!shop) return;
 
-    // Snap & clamp while dragging
-    const { x, y } = normalizePosition(newX, newY, shop, gridSizeFt);
-    shop.moveEquipment(id, x, y);
-    setRenderTick((t) => t + 1);
-  }
+  const eq = shop.getEquipmentById
+    ? shop.getEquipmentById(id)
+    : shop.equipment_list.find((e) => e.id === id);
+
+  if (!eq) return;
+
+  // Snap & clamp while dragging (rotation-aware)
+  const { x, y } = normalizePosition(newX, newY, shop, gridSizeFt, eq);
+
+  shop.moveEquipment(id, x, y);
+  setRenderTick((t) => t + 1);
+
+  // Debounced autosave of positions
+  scheduleAutosave(shop);
+}
+
 
   function handleSelectEquipment(id) {
     setSelectedId(id);
-    setIsDetailsOpen(id != null); // open modal when something is selected
+    setIsDetailsOpen(id != null);
   }
 
   async function handleDeleteEquipment(equipment) {
     if (!shop || !equipment) return;
 
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete ${equipment.name}? This will remove it from your equipment inventory permanently.`
-    );
 
-    if (!confirmDelete) return;
 
     try {
       // 1. Remove from in-memory model first (optimistic update)
@@ -344,76 +447,43 @@ export function useShopPage({ shopId, user, navigate }) {
     }
   }
 
+  // Rotate selected: update rotation, normalize, autosave
   function rotateSelected(delta) {
     if (selectedId == null || !shop) return;
-    shop.rotateEquipment(selectedId, delta);
+
+    const eq = shop.getEquipmentById
+      ? shop.getEquipmentById(selectedId)
+      : shop.equipment_list.find((e) => e.id === selectedId);
+
+    if (!eq) return;
+
+    // Update rotation in the model
+    shop.rotateEquipment
+      ? shop.rotateEquipment(selectedId, delta)
+      : (eq.rotationDeg = (eq.rotationDeg || 0) + delta);
+
+    // After rotation, clamp/normalize so footprint stays inside shop
+    const { x, y } = normalizePosition(
+      eq.x,
+      eq.y,
+      shop,
+      gridSizeFt,
+      eq
+    );
+    eq.x = x;
+    eq.y = y;
+
     setRenderTick((t) => t + 1);
+    scheduleAutosave(shop);
   }
 
   function handleGridSizeChange(newSizeFt) {
     setGridSizeFt(newSizeFt);
   }
 
-
   function handleCloseDetailsPanel() {
     setIsDetailsOpen(false);
     setSelectedId(null);
-  }
-
-  async function handleSaveAndReturn() {
-    if (!shop) return;
-    setIsSaving(true);
-    setSaveError("");
-    setSaveSuccess(false);
-
-    try {
-      // Gather all equipment positions from the shop
-      // Use equipmentDbId (the actual user_equipment.id) not the local canvas id
-      const equipment_positions = shop.equipment_list
-        .filter((eq) => eq.equipmentDbId) // Only include equipment that has a DB ID
-        .map((eq) => ({
-          equipment_id: eq.equipmentDbId,
-          x: eq.x,
-          y: eq.y,
-          z: eq.z || 0,
-        }));
-
-      const payload = {
-        shop_name: shopForm.name,
-        length: shopForm.length,
-        width: shopForm.width,
-        height: shopForm.height,
-        equipment_positions: equipment_positions,
-      };
-
-      const res = await axios.put(`${API_BASE}/shops/${shopId}`, payload);
-      const updated = res.data.shop;
-
-      // Sync with returned values (optional safety)
-      if (updated) {
-        const length = updated.length ?? shopForm.length;
-        const width = updated.width ?? shopForm.width;
-        const height = updated.height ?? shopForm.height;
-
-        shop.depthFt = length;
-        shop.widthFt = width;
-
-        setShopForm({ name: shopForm.name, length, width, height });
-        setRenderTick((t) => t + 1);
-      }
-
-      setSaveSuccess(true);
-
-      if (navigate) {
-        navigate("/shop-spaces");
-      }
-    } catch (err) {
-      console.error("Failed to save shop:", err);
-      console.error("Error details:", err.response?.data);
-      setSaveError(err.response?.data?.error || "Failed to save shop.");
-    } finally {
-      setIsSaving(false);
-    }
   }
 
   const selectedEq =
@@ -429,15 +499,20 @@ export function useShopPage({ shopId, user, navigate }) {
     renderTick,
     loading,
     errorMsg,
-    isEditing,
     isDetailsOpen,
     shopForm,
     isSaving,
     saveError,
     saveSuccess,
     gridSizeFt,
+    showUseAreas,
+    draggingEq,
+    // toggles
+    toggleShowUseAreas,
+    // setters
+    setShowUseAreas,
+    setDraggingEq,
     // handlers
-    toggleEditing,
     handleShopFormChange,
     handleDragStart,
     handleDropEquipment,
@@ -446,8 +521,6 @@ export function useShopPage({ shopId, user, navigate }) {
     handleDeleteEquipment,
     rotateSelected,
     handleGridSizeChange,
-    handleSaveAndReturn,
     handleCloseDetailsPanel,
-
   };
 }
