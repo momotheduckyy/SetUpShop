@@ -32,21 +32,11 @@ export default function EquipmentDetailsModal({
     equipment.description ||
     "No detailed description has been saved for this tool yet.";
 
-  // -------- Maintenance tasks / notes ----------
+  // -------- Maintenance interval ----------
   const maintenanceInterval =
     equipment.maintenanceIntervalDays ??
     equipment.maintenance_interval_days ??
     null;
-
-  const notes = equipment.maintenanceNotes || "";
-
-  // Turn notes into bullet-style tasks if there are separators.
-  const maintenanceTasks = notes
-    ? notes
-        .split(/[\n;•\-]+/) // split on newlines, semicolons, bullets, dashes
-        .map((t) => t.trim())
-        .filter(Boolean)
-    : [];
 
   const widthText =
     typeof equipment.widthFt === "number"
@@ -123,28 +113,6 @@ export default function EquipmentDetailsModal({
             <div className="eq-details-section">
               <h3 className="eq-details-section-title">Description</h3>
               <p className="eq-details-description">{description}</p>
-            </div>
-
-            <div className="eq-details-section">
-              <h3 className="eq-details-section-title">
-                Maintenance Tasks
-              </h3>
-              {maintenanceTasks.length > 0 ? (
-                <ul className="eq-details-maint-list">
-                  {maintenanceTasks.map((task, idx) => (
-                    <li key={idx} className="eq-details-maint-item">
-                      {task}
-                    </li>
-                  ))}
-                </ul>
-              ) : notes ? (
-                // If there were notes but we couldn't nicely split them
-                <p className="eq-details-description">{notes}</p>
-              ) : (
-                <p className="eq-details-muted">
-                  No specific maintenance tasks listed yet.
-                </p>
-              )}
             </div>
           </div>
         </section>

@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react'
+import Calendar from 'react-calendar'
+import 'react-calendar/dist/Calendar.css'
 import { getUserEquipment, recordMaintenance } from '../services/api'
 import '../styles/Maintenance.css'
+import '../styles/Equipment.css'
 
 function Maintenance({ user }) {
   const [equipment, setEquipment] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [recordingId, setRecordingId] = useState(null)
+  const [selectedDate, setSelectedDate] = useState(new Date())
 
   useEffect(() => {
     fetchEquipmentWithMaintenance()
@@ -126,13 +130,116 @@ function Maintenance({ user }) {
     return (
       <div className="maintenance-container">
         <h2>Maintenance Schedule</h2>
-        <p>No equipment found. Add equipment to your inventory to track maintenance.</p>
+        <p className="eqp-muted">No equipment found. Add equipment to your inventory to track maintenance.</p>
       </div>
     )
   }
 
   const overdueCount = equipment.filter(eq => eq.maintenanceStatus === 'overdue').length
   const dueSoonCount = equipment.filter(eq => eq.maintenanceStatus === 'due_soon').length
+
+  // Get dates with maintenance scheduled
+  const maintenanceDates = equipment
+    .filter(eq => eq.next_maintenance_date)
+    .map(eq => new Date(eq.next_maintenance_date).toDateString())
+
+  // Check if a date has maintenance
+  const tileClassName = ({ date, view }) => {
+    if (view === 'month') {
+      const dateStr = date.toDateString()
+      if (maintenanceDates.includes(dateStr)) {
+        return 'has-maintenance'
+      }
+    }
+    return null
+  }
+
+  // Group equipment by time period
+  const groupEquipmentByPeriod = () => {
+    const today = new Date()
+    const groups = {
+      overdue: [],
+      thisWeek: [],
+      thisMonth: [],
+      upcoming: []
+    }
+
+    equipment.forEach(eq => {
+      if (eq.maintenanceStatus === 'overdue') {
+        groups.overdue.push(eq)
+      } else if (eq.daysUntilMaintenance !== null) {
+        if (eq.daysUntilMaintenance <= 7) {
+          groups.thisWeek.push(eq)
+        } else if (eq.daysUntilMaintenance <= 30) {
+          groups.thisMonth.push(eq)
+        } else {
+          groups.upcoming.push(eq)
+        }
+      } else {
+        groups.upcoming.push(eq)
+      }
+    })
+
+    return groups
+  }
+
+  const groups = groupEquipmentByPeriod()
+
+  const renderEquipmentGroup = (title, equipmentList, emptyMessage) => {
+    if (equipmentList.length === 0) return null
+
+    return (
+      <div className="equipment-group">
+        <h3 className="group-title">{title} ({equipmentList.length})</h3>
+        <div className="equipment-cards">
+          {equipmentList.map(eq => (
+            <div key={eq.id} className={`equipment-card ${eq.maintenanceStatus}`}>
+              <div className="card-header">
+                <h4 className="equipment-name">{eq.equipment_name}</h4>
+                {getStatusBadge(eq.maintenanceStatus)}
+              </div>
+              <div className="card-details">
+                <div className="detail-row">
+                  <span className="detail-label">Next Due:</span>
+                  <span className="detail-value">
+                    {eq.next_maintenance_date ? (
+                      <>
+                        {formatDate(eq.next_maintenance_date)}
+                        {eq.daysUntilMaintenance !== null && (
+                          <span className="days-until">
+                            {eq.daysUntilMaintenance > 0
+                              ? ` (in ${eq.daysUntilMaintenance} days)`
+                              : ` (${Math.abs(eq.daysUntilMaintenance)} days ago)`}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      'Not scheduled'
+                    )}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Interval:</span>
+                  <span className="detail-value">{eq.maintenance_interval_days} days</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Last Done:</span>
+                  <span className="detail-value">{formatDate(eq.last_maintenance_date)}</span>
+                </div>
+              </div>
+              <button
+                className="record-maintenance-btn"
+                onClick={() => handleRecordMaintenance(eq.id)}
+                disabled={recordingId === eq.id}
+              >
+                {recordingId === eq.id ? 'Recording...' : 'Record Maintenance'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="maintenance-container">
@@ -158,54 +265,38 @@ function Maintenance({ user }) {
         </div>
       </div>
 
-      <div className="maintenance-list">
-        <table className="maintenance-table">
-          <thead>
-            <tr>
-              <th>Equipment</th>
-              <th>Status</th>
-              <th>Last Maintenance</th>
-              <th>Next Due</th>
-              <th>Interval</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {equipment.map(eq => (
-              <tr key={eq.id} className={`maintenance-row ${eq.maintenanceStatus}`}>
-                <td className="equipment-name">{eq.equipment_name}</td>
-                <td>{getStatusBadge(eq.maintenanceStatus)}</td>
-                <td>{formatDate(eq.last_maintenance_date)}</td>
-                <td>
-                  {eq.next_maintenance_date ? (
-                    <>
-                      {formatDate(eq.next_maintenance_date)}
-                      {eq.daysUntilMaintenance !== null && (
-                        <span className="days-until">
-                          {eq.daysUntilMaintenance > 0
-                            ? ` (in ${eq.daysUntilMaintenance} days)`
-                            : ` (${Math.abs(eq.daysUntilMaintenance)} days ago)`}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    'Not scheduled'
-                  )}
-                </td>
-                <td>{eq.maintenance_interval_days} days</td>
-                <td>
-                  <button
-                    className="record-maintenance-btn"
-                    onClick={() => handleRecordMaintenance(eq.id)}
-                    disabled={recordingId === eq.id}
-                  >
-                    {recordingId === eq.id ? 'Recording...' : 'Record Maintenance'}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="calendar-list-hybrid">
+        {/* Left Side: Calendar */}
+        <div className="calendar-section">
+          <Calendar
+            value={selectedDate}
+            onChange={setSelectedDate}
+            tileClassName={tileClassName}
+            className="maintenance-calendar"
+          />
+          <div className="calendar-legend">
+            <div className="legend-item">
+              <span className="legend-dot has-maintenance"></span>
+              <span>Maintenance Due</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Equipment List */}
+        <div className="equipment-list-section">
+          {groups.overdue.length > 0 && renderEquipmentGroup('🔴 Overdue', groups.overdue)}
+          {groups.thisWeek.length > 0 && renderEquipmentGroup('🟠 This Week', groups.thisWeek)}
+          {groups.thisMonth.length > 0 && renderEquipmentGroup('🟡 This Month', groups.thisMonth)}
+          {groups.upcoming.length > 0 && renderEquipmentGroup('✅ Upcoming', groups.upcoming)}
+
+          {equipment.length > 0 &&
+           groups.overdue.length === 0 &&
+           groups.thisWeek.length === 0 &&
+           groups.thisMonth.length === 0 &&
+           groups.upcoming.length === 0 && (
+            <p className="no-equipment">All equipment is up to date!</p>
+          )}
+        </div>
       </div>
     </div>
   )

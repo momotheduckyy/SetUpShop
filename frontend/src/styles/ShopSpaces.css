@@ -32,12 +32,37 @@
   border: 1px solid rgba(0, 0, 0, 0.06);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  position: relative;
 }
 
 .shop-space-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
   border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* Delete Shop Button */
+.delete-shop-btn {
+  background: #ff3b30;
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  margin-top: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.delete-shop-btn:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
+}
+
+.delete-shop-btn:active {
+  transform: translateY(0);
 }
 
 /* Shop name heading in card */

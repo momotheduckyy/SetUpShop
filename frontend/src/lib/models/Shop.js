@@ -31,6 +31,7 @@ export class Shop {
       equipmentDbId: config.equipment_id || config.id || null,
       manufacturer: config.manufacturer,
       model: config.model,
+      description: config.description,
       maintenanceIntervalDays: config.maintenanceIntervalDays,
       maintenanceNotes: config.maintenanceNotes,
     });

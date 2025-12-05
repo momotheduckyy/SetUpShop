@@ -1,7 +1,24 @@
 .maintenance-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.maintenance-container > h2 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.015em;
+}
+
+.maintenance-container > p {
+  color: #6e6e73;
+  font-size: 1.125rem;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
 }
 
 .maintenance-header {
@@ -175,4 +192,247 @@
   color: #ff3b30;
   font-size: 1rem;
   margin-top: 1rem;
+}
+
+/* Calendar-List Hybrid Layout */
+.calendar-list-hybrid {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+/* Calendar Section */
+.calendar-section {
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+}
+
+.maintenance-calendar {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 1rem;
+  width: 100%;
+  font-family: inherit;
+}
+
+/* React Calendar Override Styles */
+.maintenance-calendar .react-calendar__tile {
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  position: relative;
+}
+
+.maintenance-calendar .react-calendar__tile:hover {
+  background: #f5f5f7;
+}
+
+.maintenance-calendar .react-calendar__tile--active {
+  background: #1d1d1f;
+  color: #ffffff;
+}
+
+.maintenance-calendar .react-calendar__tile.has-maintenance::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background: #ff9500;
+  border-radius: 50%;
+}
+
+.maintenance-calendar .react-calendar__tile--active.has-maintenance::after {
+  background: #ffffff;
+}
+
+.maintenance-calendar .react-calendar__navigation {
+  margin-bottom: 1rem;
+}
+
+.maintenance-calendar .react-calendar__navigation button {
+  padding: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  border-radius: 6px;
+}
+
+.maintenance-calendar .react-calendar__navigation button:hover {
+  background: #f5f5f7;
+}
+
+.maintenance-calendar .react-calendar__month-view__weekdays {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6e6e73;
+}
+
+/* Calendar Legend */
+.calendar-legend {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6e6e73;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.has-maintenance {
+  background: #ff9500;
+}
+
+/* Equipment List Section */
+.equipment-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.equipment-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.group-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+.equipment-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+/* Equipment Card */
+.equipment-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.equipment-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.equipment-card.overdue {
+  border-left: 4px solid #ff3b30;
+}
+
+.equipment-card.due_soon {
+  border-left: 4px solid #ff9500;
+}
+
+.equipment-card.good {
+  border-left: 4px solid #22c55e;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.card-header .equipment-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+.card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: 0.9375rem;
+}
+
+.detail-label {
+  color: #6e6e73;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: #1d1d1f;
+  text-align: right;
+}
+
+.no-equipment {
+  text-align: center;
+  padding: 3rem;
+  color: #6e6e73;
+  font-size: 1.125rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .calendar-list-hybrid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-section {
+    position: relative;
+    top: 0;
+  }
+
+  .equipment-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .maintenance-container {
+    padding: 1rem;
+  }
+
+  .maintenance-summary {
+    flex-direction: column;
+  }
+
+  .summary-card {
+    width: 100%;
+  }
+
+  .equipment-cards {
+    grid-template-columns: 1fr;
+  }
 }

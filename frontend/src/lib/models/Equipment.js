@@ -13,6 +13,7 @@ export class Equipment {
     manufacturer = "",
     model = "",
     make = "",
+    description = "",
     maintenanceIntervalDays = null,
     maintenanceNotes = "",
     equipmentDbId = null,
@@ -30,6 +31,7 @@ export class Equipment {
     this.manufacturer = manufacturer;
     this.model = model;
     this.make = make;
+    this.description = description;
     this.maintenanceIntervalDays = maintenanceIntervalDays;
     this.maintenanceNotes = maintenanceNotes;
 
