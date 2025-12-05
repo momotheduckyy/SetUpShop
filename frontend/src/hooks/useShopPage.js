@@ -14,7 +14,7 @@ import {
 import { normalizePosition } from "../utils/shopLayoutUtils";
 import { canPlaceEquipment } from "../utils/collisionUtils";
 
-const API_BASE = "http://localhost:5001/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
 
 export function useShopPage({ shopId, user, navigate }) {
   const [shop, setShop] = useState(null);

@@ -1,13 +1,16 @@
 import sqlite3
 import json
+import os
 from datetime import datetime
 from pathlib import Path
-from models.placement import Position, EquipmentPlacement 
+from models.placement import Position, EquipmentPlacement
 
 # Database paths - following existing project structure
-DB_PATH = Path(__file__).parent.parent / "db" / "shop_spaces.db"
-USERS_DB_PATH = Path(__file__).parent.parent / "db" / "users.db"
-EQUIPMENT_DB_PATH = Path(__file__).parent.parent / "db" / "equipment.db"
+# Support environment variable for production deployment
+DB_DIR = os.getenv('DB_PATH', str(Path(__file__).parent.parent / "db"))
+DB_PATH = Path(DB_DIR) / "shop_spaces.db"
+USERS_DB_PATH = Path(DB_DIR) / "users.db"
+EQUIPMENT_DB_PATH = Path(DB_DIR) / "equipment.db"
 
 # Database schema for shop spaces
 DDL = """

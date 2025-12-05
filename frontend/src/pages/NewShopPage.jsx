@@ -8,7 +8,7 @@ import { ShopSize } from "../lib/models/ShopSize";
 
 
 
-const API_BASE = "http://localhost:5001/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
 
 export default function NewShopPage({ user }) {
   const navigate = useNavigate();

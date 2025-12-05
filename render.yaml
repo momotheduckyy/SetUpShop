@@ -1,0 +1,38 @@
+services:
+  # Backend Flask API
+  - type: web
+    name: setupshop-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && python server.py
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: DB_PATH
+        value: /opt/render/project/db
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: setupshop-frontend
+          property: host
+    disk:
+      name: db-storage
+      mountPath: /opt/render/project/db
+      sizeGB: 1
+
+  # Frontend Static Site
+  - type: web
+    name: setupshop-frontend
+    runtime: static
+    region: oregon
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: setupshop-backend
+          property: host

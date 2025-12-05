@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/MaintenancePage.css';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+
 export default function MaintenancePage({ user }) {
   const [schedule, setSchedule] = useState({ overdue: [], this_week: [], upcoming: [] });
   const [loading, setLoading] = useState(true);
@@ -13,7 +15,7 @@ export default function MaintenancePage({ user }) {
 
   const fetchSchedule = async () => {
     try {
-      const res = await fetch(`http://localhost:5001/api/equipment/maintenance-schedule/${user.id}`);
+      const res = await fetch(`${API_BASE}/equipment/maintenance-schedule/${user.id}`);
       const data = await res.json();
       setSchedule(data);
       setLoading(false);
@@ -25,7 +27,7 @@ export default function MaintenancePage({ user }) {
 
   const handleComplete = async (equipmentId) => {
     try {
-      await fetch(`http://localhost:5001/api/equipment/maintenance/complete/${equipmentId}`, {
+      await fetch(`${API_BASE}/equipment/maintenance/complete/${equipmentId}`, {
         method: 'POST'
       });
       fetchSchedule();

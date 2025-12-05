@@ -1,12 +1,16 @@
 import sqlite3  # import sqlite
+import os
 from datetime import date, timedelta
 from pathlib import Path
 
 # Match user format; have equipment go in database
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DB_PATH = PROJECT_ROOT / "db" / "equipment.db" #so server can open DB reliably(fixes "unable to open database file" when working directory varies)
+
+# Support environment variable for production deployment (e.g., Render persistent disk)
+DB_DIR = os.getenv('DB_PATH', str(PROJECT_ROOT / "db"))
+DB_PATH = Path(DB_DIR) / "equipment.db"
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)  # Ensure folder exists
-USERS_DB_PATH = Path(__file__).parent.parent / "db" / "users.db"
+USERS_DB_PATH = Path(DB_DIR) / "users.db"
 
 # Basic database connection functions
 def _connect():

@@ -1,8 +1,11 @@
 import sqlite3, json
 import hashlib
+import os
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent.parent / "db" / "users.db"
+# Support environment variable for production deployment
+DB_DIR = os.getenv('DB_PATH', str(Path(__file__).parent.parent / "db"))
+DB_PATH = Path(DB_DIR) / "users.db"
 
 #basic functions -------------------------------------------------------------------
 #create new connection to the database, ensure foreign keys are enabled, configure row_factory to return dict-like rows
