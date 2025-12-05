@@ -31,7 +31,14 @@ app = Flask(__name__)
 # CORS configuration for production
 # Allow requests from production frontend URL or localhost for development
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
-CORS(app, origins=[FRONTEND_URL, 'http://localhost:5173'])
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [FRONTEND_URL, 'http://localhost:5173'],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
 
 # Health check endpoint
 @app.route('/api/health', methods=['GET'])
