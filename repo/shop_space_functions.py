@@ -219,33 +219,42 @@ def add_equipment_to_shop_space(shop_id, placement):
 
 def remove_equipment_from_shop_space(shop_id, equipment_id):
     """
-    Remove equipment from a shop space
-    
+    Remove equipment from a shop space and delete it from user_equipment table
+
     Args:
         shop_id (str): Shop space identifier
         equipment_id (int): Equipment ID to remove
-        
+
     Returns:
         dict: Updated shop space data or None if failed
     """
     shop_space = get_shop_space_by_id(shop_id)
     if not shop_space:
         raise ValueError(f"Shop space with ID '{shop_id}' does not exist")
-    
+
     # Filter out the equipment to remove
     current_equipment = shop_space['equipment']
     updated_equipment = [eq for eq in current_equipment if eq['equipment_id'] != equipment_id]
-    
-    # Update database
+
+    # Update shop space database
     equipment_json = json.dumps(updated_equipment)
-    
+
     with _connect_shop_spaces() as conn:
         cursor = conn.execute(
             "UPDATE shop_spaces SET equipment = ? WHERE shop_id = ?",
             (equipment_json, shop_id)
         )
         conn.commit()
+
         if cursor.rowcount > 0:
+            # Also delete the equipment from user_equipment table
+            with _connect_equipment() as eq_conn:
+                eq_conn.execute(
+                    "DELETE FROM user_equipment WHERE id = ?",
+                    (equipment_id,)
+                )
+                eq_conn.commit()
+
             return get_shop_space_by_id(shop_id)
         return None
 
@@ -337,14 +346,31 @@ def update_shop_space_dimensions(shop_id, length=None, width=None, height=None, 
 
 def delete_shop_space(shop_id):
     """
-    Delete a shop space completely
-    
+    Delete a shop space completely and all equipment in it
+
     Args:
         shop_id (str): Shop space identifier to delete
-        
+
     Returns:
         bool: True if deleted successfully, False otherwise
     """
+    # First, get the shop space to find all equipment in it
+    shop_space = get_shop_space_by_id(shop_id)
+    if not shop_space:
+        return False
+
+    # Delete all equipment from user_equipment table
+    equipment_ids = [eq['equipment_id'] for eq in shop_space['equipment']]
+    if equipment_ids:
+        with _connect_equipment() as eq_conn:
+            placeholders = ','.join('?' * len(equipment_ids))
+            eq_conn.execute(
+                f"DELETE FROM user_equipment WHERE id IN ({placeholders})",
+                equipment_ids
+            )
+            eq_conn.commit()
+
+    # Then delete the shop space itself
     with _connect_shop_spaces() as conn:
         cursor = conn.execute("DELETE FROM shop_spaces WHERE shop_id = ?", (shop_id,))
         conn.commit()
