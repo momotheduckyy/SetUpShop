@@ -3,7 +3,6 @@ services:
   - type: web
     name: setupshop-backend
     runtime: python
-    region: oregon
     plan: free
     buildCommand: pip install -r backend/requirements.txt
     startCommand: cd backend && python server.py
@@ -11,22 +10,17 @@ services:
       - key: FLASK_ENV
         value: production
       - key: DB_PATH
-        value: /opt/render/project/db
+        value: /tmp/db
       - key: FRONTEND_URL
         fromService:
           type: web
           name: setupshop-frontend
           property: host
-    disk:
-      name: db-storage
-      mountPath: /opt/render/project/db
-      sizeGB: 1
 
   # Frontend Static Site
   - type: web
     name: setupshop-frontend
     runtime: static
-    region: oregon
     plan: free
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
