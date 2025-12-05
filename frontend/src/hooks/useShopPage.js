@@ -214,6 +214,7 @@ export function useShopPage({ shopId, user, navigate }) {
           color: eq.color || "#aaa",
           manufacturer: eq.manufacturer || "",
           model: eq.model || "",
+          description: eq.description || "",
           maintenanceIntervalDays: eq.maintenance_interval_days,
         }));
 
@@ -244,6 +245,7 @@ export function useShopPage({ shopId, user, navigate }) {
           color: eq.color || "#aaa",
           manufacturer: eq.manufacturer || "",
           model: eq.model || "",
+          description: eq.description || "",
           maintenanceIntervalDays: eq.maintenance_interval_days,
           maintenanceNotes: eq.notes || "",
         }));

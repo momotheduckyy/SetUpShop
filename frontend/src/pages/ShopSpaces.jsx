@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getShopsByUsername, createShop } from '../services/api'
+import { getShopsByUsername, createShop, deleteShop } from '../services/api'
 import '../styles/ShopSpaces.css'
 
 function ShopSpaces({ user }) {
@@ -94,6 +94,21 @@ function ShopSpaces({ user }) {
     }
   }
 
+  const handleDeleteShop = async (e, shopId, shopName) => {
+    e.stopPropagation() // Prevent card click navigation
+
+    if (!window.confirm(`Are you sure you want to delete "${shopName}"? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      await deleteShop(shopId)
+      await fetchShopSpaces() // Refresh the list
+    } catch (err) {
+      alert(`Failed to delete shop: ${err.message}`)
+    }
+  }
+
   if (loading) {
     return (
       <div className="shop-spaces-container">
@@ -129,6 +144,13 @@ function ShopSpaces({ user }) {
                   Dimensions: {space.length} × {space.width} × {space.height} ft
                 </p>
                 <p>Equipment: {space.equipment?.length ?? 0} items</p>
+                <button
+                  className="delete-shop-btn"
+                  onClick={(e) => handleDeleteShop(e, id, space.shop_name)}
+                  title="Delete shop"
+                >
+                  Delete
+                </button>
               </div>
             )
           })

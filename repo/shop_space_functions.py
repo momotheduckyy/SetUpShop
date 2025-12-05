@@ -151,10 +151,10 @@ def create_shop_space(username, shop_name, length, width, height):
 def get_shop_space_by_id(shop_id):
     """
     Get shop space by its unique ID
-    
+
     Args:
         shop_id (str): Unique shop identifier
-        
+
     Returns:
         dict: Shop space data or None if not found
     """

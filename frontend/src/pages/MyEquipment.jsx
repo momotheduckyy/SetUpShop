@@ -120,7 +120,6 @@ function MyEquipment({ user }) {
               <table className="eqp-table">
                 <thead>
                   <tr>
-                    <th>Image</th>
                     <th>Name</th>
                     <th>Description</th>
                     <th>Dimensions (W×D×H)</th>
@@ -131,13 +130,6 @@ function MyEquipment({ user }) {
                 <tbody>
                   {equipmentInThisShop.map((eq) => (
                     <tr key={eq.id}>
-                       <td>
-                        <img
-                          src={`/equipment-images/${eq.image_path}`}
-                          alt={eq.equipment_name}
-                          className="eqp-thumb"
-                        />
-                      </td>
                       <td>{eq.equipment_name}</td>
                       <td>{eq.description || "-"}</td>
                       <td>
@@ -174,7 +166,6 @@ function MyEquipment({ user }) {
             <table className="eqp-table">
               <thead>
                 <tr>
-                  <th>Image</th>
                   <th>Name</th>
                   <th>Description</th>
                   <th>Dimensions (W×D×H)</th>
@@ -185,13 +176,6 @@ function MyEquipment({ user }) {
               <tbody>
                 {unplaced.map((eq) => (
                   <tr key={eq.id}>
-                    <td>
-                      <img
-                        src={`/equipment-images/${eq.image_path}`}
-                        alt={eq.equipment_name}
-                        className="eqp-thumb"
-                      />
-                    </td>
                     <td>{eq.equipment_name}</td>
                     <td>{eq.description || "-"}</td>
                     <td>
