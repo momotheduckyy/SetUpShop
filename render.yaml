@@ -9,12 +9,16 @@ services:
       - key: FLASK_ENV
         value: production
       - key: DB_PATH
-        value: /tmp/db
+        value: /opt/render/project/db
       - key: FRONTEND_URL
         fromService:
           type: web
           name: setupshop-frontend
           property: host
+    disk:
+      name: setupshop-db-storage
+      mountPath: /opt/render/project/db
+      sizeGB: 1
 
   # Frontend Static Site
   - type: web
